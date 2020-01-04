@@ -1,10 +1,12 @@
 extern crate clap;
 extern crate ini;
 extern crate glium;
+extern crate xml;
 
 mod ui;
 mod vconfig;
 mod verror;
+mod vngl;
 
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};
