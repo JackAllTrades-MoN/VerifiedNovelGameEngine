@@ -1,0 +1,10 @@
+[package]
+name = "venge"
+version = "0.1.0"
+authors = ["satakeyuki <satake@logic.cs.tsukuba.ac.jp>"]
+edition = "2018"
+
+[dependencies]
+clap = "*"
+glium = "*"
+rust-ini = "*"

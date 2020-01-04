@@ -1,0 +1,5 @@
+[scene:title]
+[layout:title.vngl]
+[selection:
+ "はじめから", scene1.vngl;
+ "続きから", load.vngl]
