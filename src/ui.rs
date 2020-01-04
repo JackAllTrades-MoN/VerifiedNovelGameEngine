@@ -1,9 +1,12 @@
 use crate::glium;
 use crate::glium::{Surface};
+use crate::image;
+
+//use std::io::Cursor;
+
 use crate::verror::{OrError};
 use crate::vconfig::{Config};
 use crate::vngl::Vngl;
-
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -75,6 +78,10 @@ pub fn from_file(cfg_file: &Config, layout_file: &str) -> OrError<()> {
     let shape = vec![vertex1, vertex2, vertex3];
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+
+    let image = image::open("example/img/dummytitle.png").unwrap().to_rgba();
+    let image_dim = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dim);
 
     let mut closed = false;
     while !closed {

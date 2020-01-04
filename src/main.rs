@@ -2,6 +2,7 @@ extern crate clap;
 extern crate ini;
 extern crate glium;
 extern crate xml;
+extern crate image;
 
 mod ui;
 mod vconfig;
