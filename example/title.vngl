@@ -1,5 +1,5 @@
 <body>
 <img src="dummytitle.png"/>
-<img src="dummytitle_logo.png"/>
+<img src="dummytitle_logo.png" x="50" y="100"/>
 <selection name="selection" x="400" y="300"/>
 </body>

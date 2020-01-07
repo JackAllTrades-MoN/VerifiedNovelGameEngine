@@ -6,14 +6,20 @@ use crate::verror::{OrError};
 
 #[derive(Debug)]
 pub struct TagImg {
-    pub src: String
+    pub src: String,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl TagImg {
     pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> TagImg {
         let mut it = attributes.into_iter();
         let v = it.find(|attr| attr.name.local_name == "src").unwrap();
-        TagImg{src:v.value}
+        let x = it.find(|attr| attr.name.local_name == "x")
+            .map(|x| x.value.parse().unwrap()).unwrap_or(0);
+        let y = it.find(|attr| attr.name.local_name == "y")
+            .map(|y| y.value.parse().unwrap()).unwrap_or(0);
+        TagImg{src:v.value, x:x, y:y}
     }
 }
 
