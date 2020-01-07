@@ -1,5 +1,6 @@
 extern crate clap;
 extern crate ini;
+#[macro_use]
 extern crate glium;
 extern crate xml;
 extern crate image;
