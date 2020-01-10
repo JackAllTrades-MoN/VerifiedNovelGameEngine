@@ -7,6 +7,10 @@ use crate::image;
 use crate::verror::{OrError};
 use crate::vconfig::{Config};
 use crate::vngl::Vngl;
+use crate::vngl;
+
+type DrawnObject =
+    (glium::VertexBuffer<Vertex>, glium::IndexBuffer<u16>, glium::texture::Texture2d);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
@@ -42,40 +46,50 @@ static FRAGMENT_SHADER_SRC: &str = r#"
         color = texture(tex, v_tex_coords);
     }
 "#;
-/*
-pub fn load_tag(display: glium::Display, tag: vngl::InBody) -> Option<(u32, u32)> {
-    match tag {
-        vngl::Img(tagimg) => None,
-        vngl::Selection(tagsel) => None
-    }
-}*/
 
-pub fn mk_2d_image<F: glium::backend::Facade>(display: &F,
-                   window_w: f64,
-                   window_h: f64,
-                   filename: &str,
-                   x: u32,
-                   y: u32,
-                   w: u32,
-                   h: u32) -> (glium::VertexBuffer<Vertex>,
-                               glium::IndexBuffer<u16>,
-                               glium::texture::Texture2d) {
+pub fn load_tag<F: glium::backend::Facade>(display: &F,
+                                           cfg: &Config,
+                                           tag: &vngl::InBody) -> Option<(glium::VertexBuffer<Vertex>,
+                                                                         glium::IndexBuffer<u16>,
+                                                                         glium::texture::Texture2d)> {
+    let project_root = cfg.project_root.to_string();
+    match tag {
+        vngl::InBody::Img(tagimg) =>
+        {
+            let x = tagimg.x.unwrap_or(0);
+            let y = tagimg.y.unwrap_or(0);
+            let w = tagimg.w;
+            let h = tagimg.h;
+            let src = project_root + "/" + &tagimg.src;
+            Some(mk_2d_image(display, cfg, &src, x, y, w, h))
+        },
+        vngl::InBody::Selection(tagsel) =>
+            None
+    }
+}
+
+pub fn mk_2d_image<F: glium::backend::Facade>(
+    display: &F, cfg: &Config, filename: &str,
+    x:u32, y:u32, w:Option<u32>, h:Option<u32>) -> DrawnObject {
+    let to_rel_w = |x: u32| -> f64 { f64::from(x*2)/cfg.window_w };
+    let to_rel_h = |y: u32| -> f64 { f64::from(y*2)/cfg.window_h };
     let image = image::open(filename).unwrap().to_rgba();
-    let image_dim = image.dimensions();
+    let image_dim = image.dimensions();// u32 * u32
     let image = glium::texture::RawImage2d::from_raw_rgba_reversed(
         &image.into_raw(), image_dim);
     let texture = glium::texture::Texture2d::new(display, image).unwrap();
 
-    let relx = (f64::from(x*2)/f64::from(window_w) - f64::from(1.0)) as f32;
-    let rely = (f64::from(y*2)/f64::from(window_h) - f64::from(1.0)) as f32;
-    let relw = (f64::from(w*2)/f64::from(window_w)) as f32;
-    let relh = (f64::from(h*2)/f64::from(window_h)) as f32;
-    let v0 = Vertex { position: [relx, rely + relh], tex_coords: [0.0, 1.0] };
-    let v1 = Vertex { position: [relx + relw, rely + relh], tex_coords: [1.0, 1.0] };
-    let v2 = Vertex { position: [relx, rely], tex_coords: [0.0,0.0]};
-    let v3 = Vertex { position: [relx + relw, rely], tex_coords: [1.0, 0.0]};
+    let relx = (f64::from(x*2)/cfg.window_w - f64::from(1.0)) as f32;
+    let rely = (-f64::from(y*2)/cfg.window_h + f64::from(1.0)) as f32;
+    let relw = w.map(|w| to_rel_w(w)).unwrap_or(to_rel_w(image_dim.0)) as f32;
+    let relh = h.map(|h| to_rel_h(h)).unwrap_or(to_rel_h(image_dim.1)) as f32;
+
+    let v0 = Vertex { position: [relx, rely], tex_coords: [0.0, 1.0] };
+    let v1 = Vertex { position: [relx + relw, rely], tex_coords: [1.0, 1.0] };
+    let v2 = Vertex { position: [relx, rely - relh], tex_coords: [0.0,0.0] };
+    let v3 = Vertex { position: [relx + relw, rely - relh], tex_coords: [1.0, 0.0] };
     let vs = vec![v0, v1, v2, v3];
-    println!("vec: {:?}, {:?}, {:?}, {:?}", v0, v1, v2, v3);
+
     let vertex_buffer = glium::VertexBuffer::new(display, &vs).unwrap();
     let indices = glium::index::IndexBuffer::new(
         display,
@@ -84,55 +98,65 @@ pub fn mk_2d_image<F: glium::backend::Facade>(display: &F,
     (vertex_buffer, indices, texture)
 }
 
-pub fn from_file(cfg_file: &Config, layout_file: &str) -> OrError<()> {
-    let window_w = f64::from(cfg_file.window_w);
-    let window_h = f64::from(cfg_file.window_h);
+/*
+pub fn mk_2d_image_xywh<F: glium::backend::Facade>(
+    display: &F, cfg: &Config, filename: &str, x: u32, y: u32, w: u32, h: u32) -> (
+    glium::VertexBuffer<Vertex>, glium::IndexBuffer<u16>, glium::texture::Texture2d) {
+    let image = image::open(filename).unwrap().to_rgba();
+    let image_dim = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(
+        &image.into_raw(), image_dim);
+    let texture = glium::texture::Texture2d::new(display, image).unwrap();
 
-    let vngl = Vngl::from_file(layout_file);
+    let relx = (f64::from(x*2)/cfg.window_w - f64::from(1.0)) as f32;
+    let rely = (f64::from(y*2)/cfg.window_h - f64::from(1.0)) as f32;
+    let relw = (f64::from(w*2)/cfg.window_w) as f32;
+    let relh = (f64::from(h*2)/cfg.window_h) as f32;
+    let v0 = Vertex { position: [relx, rely + relh], tex_coords: [0.0, 1.0] };
+    let v1 = Vertex { position: [relx + relw, rely + relh], tex_coords: [1.0, 1.0] };
+    let v2 = Vertex { position: [relx, rely], tex_coords: [0.0,0.0] };
+    let v3 = Vertex { position: [relx + relw, rely], tex_coords: [1.0, 0.0] };
+    let vs = vec![v0, v1, v2, v3];
+    println!("vec: {:?}, {:?}, {:?}, {:?}", v0, v1, v2, v3);
+    let vertex_buffer = glium::VertexBuffer::new(display, &vs).unwrap();
+    let indices = glium::index::IndexBuffer::new(
+        display,
+        glium::index::PrimitiveType::TrianglesList,
+        &[0 as u16,1,2,2,3,1]).unwrap();
+    (vertex_buffer, indices, texture)
+} */
+
+pub fn from_file(cfg: &Config, layout_file: &str) -> OrError<()> {
+    let dim = glium::glutin::dpi::LogicalSize::new(cfg.window_w, cfg.window_h);
+    let vngl = Vngl::from_file(layout_file).unwrap();
 
     let mut events_loop = glium::glutin::EventsLoop::new();
     let wb = glium::glutin::WindowBuilder::new()
-        .with_dimensions(glium::glutin::dpi::LogicalSize::new(window_w, window_h))
+        .with_dimensions(dim)
         .with_title("UI Builder");
     let cb = glium::glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &events_loop).unwrap();
-
     let program = glium::Program::from_source(&display,
                                               VERTEX_SHADER_SRC,
                                               FRAGMENT_SHADER_SRC, None).unwrap();
 
-//    let vertex1 = Vertex { position: [-1.0,  1.0], tex_coords: [0.0, 1.0] };
-//    let vertex2 = Vertex { position: [ 1.0,  1.0], tex_coords: [1.0, 1.0] };
-//    let vertex3 = Vertex { position: [-1.0, -1.0], tex_coords: [0.0, 0.0] };
-//    let vertex4 = Vertex { position: [ 1.0, -1.0], tex_coords: [1.0, 0.0] };
-//    let shape = vec![vertex1, vertex2, vertex3, vertex4];
-//    let shape2 = vec![vertex2, vertex3, vertex4];
-//    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-//    let vertex_buffer2 = glium::VertexBuffer::new(&display, &shape2).unwrap();
-    let (vertex_buffer, indices, texture) =
+    let components = vngl.body
+        .iter()
+        .filter_map(|inbody| load_tag(&display, cfg, inbody))
+        .collect::<Vec<_>>();
+
+/*    let (vertex_buffer, indices, texture) =
         mk_2d_image(&display, window_w, window_h,
                    "example/img/dummytitle.png", 0, 0,
                     u32::from(cfg_file.window_w),
-                    u32::from(cfg_file.window_h));
-//    let indices = glium::index::IndexBuffer::new(
-//        &display,
-//        glium::index::PrimitiveType::TrianglesList,
-//        &[0 as u16,1,2,2,3,1]).unwrap();
-//    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-
-//    let image = image::open("example/img/dummytitle.png").unwrap().to_rgba();
-//    let image_dim = image.dimensions();
-//    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dim);
-//    let texture = glium::texture::Texture2d::new(&display, image).unwrap();
-
-//    let vbuff, indices, 
+                    u32::from(cfg_file.window_h)); */
 
     let mut closed = false;
     while !closed {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
-        let uniforms = uniform! {
+/*        let uniforms = uniform! {
             matrix: [
                 [1.0, 0.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0, 0.0],
@@ -140,10 +164,25 @@ pub fn from_file(cfg_file: &Config, layout_file: &str) -> OrError<()> {
                 [0.0, 0.0, 0.0, 1.0f32],
             ],
             tex: &texture,
-        };
+        };*/
+        let params = glium::DrawParameters {
+            blend: glium::draw_parameters::Blend::alpha_blending(), .. Default::default() };
+        for (vbuff, idx, tex) in &components {
+            let uniforms = uniform! {
+                matrix: [
+                    [1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0f32],
+                ],
+                tex: tex,
+            };
+//            target.draw(vbuff, idx, &program, &uniforms, &Default::default()).unwrap()
+            target.draw(vbuff, idx, &program, &uniforms, &params).unwrap();
+        }
 
-        target.draw(&vertex_buffer, &indices, &program, &uniforms,
-                    &Default::default()).unwrap();
+//        target.draw(&vertex_buffer, &indices, &program, &uniforms,
+//                    &Default::default()).unwrap();
 //        target.draw(&vertex_buffer2, &indices, &program, &uniforms,
 //                    &Default::default()).unwrap();
         target.finish().unwrap();

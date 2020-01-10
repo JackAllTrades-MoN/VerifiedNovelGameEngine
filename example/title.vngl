@@ -1,5 +1,6 @@
 <body>
-<img src="dummytitle.png"/>
-<img src="dummytitle_logo.png" x="50" y="100"/>
+<img src="img/dummytitle.png"/>
+<!-- <img src="img/dummytitle_logo.png" x="50" y="100" w="100" h="100"/> -->
+<img src="img/dummy_logo.png" x="25" y="20"/>
 <selection name="selection" x="400" y="300"/>
 </body>

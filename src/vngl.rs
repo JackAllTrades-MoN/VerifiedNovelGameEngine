@@ -7,19 +7,21 @@ use crate::verror::{OrError};
 #[derive(Debug)]
 pub struct TagImg {
     pub src: String,
-    pub x: u32,
-    pub y: u32,
+    pub x: Option<u32>,
+    pub y: Option<u32>,
+    pub w: Option<u32>,
+    pub h: Option<u32>,
 }
 
 impl TagImg {
     pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> TagImg {
         let mut it = attributes.into_iter();
         let v = it.find(|attr| attr.name.local_name == "src").unwrap();
-        let x = it.find(|attr| attr.name.local_name == "x")
-            .map(|x| x.value.parse().unwrap()).unwrap_or(0);
-        let y = it.find(|attr| attr.name.local_name == "y")
-            .map(|y| y.value.parse().unwrap()).unwrap_or(0);
-        TagImg{src:v.value, x:x, y:y}
+        let x = it.find(|attr| attr.name.local_name == "x").map(|x| x.value.parse().unwrap());
+        let y = it.find(|attr| attr.name.local_name == "y").map(|y| y.value.parse().unwrap());
+        let w = it.find(|attr| attr.name.local_name == "w").map(|w| w.value.parse().unwrap());
+        let h = it.find(|attr| attr.name.local_name == "h").map(|h| h.value.parse().unwrap());
+        TagImg{src:v.value, x:x, y:y, w:w, h:h}
     }
 }
 
