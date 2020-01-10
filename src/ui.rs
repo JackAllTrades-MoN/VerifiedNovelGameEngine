@@ -128,7 +128,7 @@ pub fn mk_2d_image_xywh<F: glium::backend::Facade>(
 
 pub fn from_file(cfg: &Config, layout_file: &str) -> OrError<()> {
     let dim = glium::glutin::dpi::LogicalSize::new(cfg.window_w, cfg.window_h);
-    let vngl = Vngl::from_file(layout_file).unwrap();
+    let vngl = Vngl::from_file(layout_file)?;
 
     let mut events_loop = glium::glutin::EventsLoop::new();
     let wb = glium::glutin::WindowBuilder::new()

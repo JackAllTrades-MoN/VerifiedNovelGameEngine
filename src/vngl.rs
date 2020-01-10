@@ -2,7 +2,7 @@ use std::io::BufReader;
 use std::fs::File;
 use crate::xml;
 use crate::xml::reader::{EventReader, XmlEvent};
-use crate::verror::{OrError};
+use crate::verror::{OrError, VError, MayNecessary};
 
 #[derive(Debug)]
 pub struct TagImg {
@@ -14,31 +14,43 @@ pub struct TagImg {
 }
 
 impl TagImg {
-    pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> TagImg {
+    pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> OrError<TagImg> {
         let mut it = attributes.into_iter();
-        let v = it.find(|attr| attr.name.local_name == "src").unwrap();
+        let v = it.find(|attr| attr.name.local_name == "src").required("img", "src")?;
         let x = it.find(|attr| attr.name.local_name == "x").map(|x| x.value.parse().unwrap());
         let y = it.find(|attr| attr.name.local_name == "y").map(|y| y.value.parse().unwrap());
         let w = it.find(|attr| attr.name.local_name == "w").map(|w| w.value.parse().unwrap());
         let h = it.find(|attr| attr.name.local_name == "h").map(|h| h.value.parse().unwrap());
-        TagImg{src:v.value, x:x, y:y, w:w, h:h}
+        Ok(TagImg{src:v.value, x:x, y:y, w:w, h:h})
     }
 }
 
 #[derive(Debug)]
 pub struct TagSel {
     pub name: String,
-    pub x: u32,
-    pub y: u32,
+    pub x: Option<u32>,
+    pub y: Option<u32>,
+    pub src: String,
 }
 
+/*
+fn lookup_attr() -> OrError<> {
+    let mut it 
+}*/
+
 impl TagSel {
-    pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> TagSel {
+    pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> OrError<TagSel> {
         let mut it = attributes.into_iter();
-        let name = it.find(|attr| attr.name.local_name == "name").unwrap();
-        let x = it.find(|attr| attr.name.local_name == "x").unwrap();
-        let y = it.find(|attr| attr.name.local_name == "y").unwrap();
-        TagSel{name:name.value, x: x.value.parse().unwrap(), y: y.value.parse().unwrap()}
+        let name = it.find(|attr| attr.name.local_name == "name")
+            .required("selection", "name")?;
+        let src = it.find(|attr| attr.name.local_name == "src")
+            .required("selection", "src")?;
+        let x = it.find(|attr| attr.name.local_name == "x");
+        let y = it.find(|attr| attr.name.local_name == "y");
+        Ok(TagSel{name:name.value,
+                  x: x.map(|x| x.value.parse().unwrap()),
+                  y: y.map(|y| y.value.parse().unwrap()),
+                  src:src.value})
     }
 }
 
@@ -72,8 +84,14 @@ impl Vngl {
                 Ok(XmlEvent::StartElement { name, attributes, .. }) => {
                     println!("{}", name);
                     match name.local_name.as_ref() {
-                        "img" => buff.push(InBody::Img(TagImg::new(attributes))),
-                        "selection" => buff.push(InBody::Selection(TagSel::new(attributes))),
+                        "img" => {
+                            let tagimg = TagImg::new(attributes)?;
+                            buff.push(InBody::Img(tagimg))
+                        },
+                        "selection" => {
+                            let tagsel = TagSel::new(attributes)?;
+                            buff.push(InBody::Selection(tagsel))
+                        },
                         _ => ()
                     }
                 },

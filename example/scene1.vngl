@@ -4,4 +4,11 @@
 <character name="" isVisible="false" exist="false"/>
 <character name="" isVisible="false" exist="false"/>
 </layout>
+<!-- <wtext src="img/default_dialog.png"/> -->
+<!-- TODO implementation
+<customDialog>
+<button name="save" src="">
+</customDialog>
+-->
+<dialog src="img/default_dialog.png" buttonImg="img/default_dialog_button.png"/>
 </body>

@@ -63,6 +63,6 @@ fn main() {
         let lfile = matches.value_of("filename").unwrap();
         Config::parse_from_file(&cfgfile)
             .and_then(|cfg| ui::from_file(&cfg, &lfile))
-            .map_err(|err| println!("Error: {:?}", err));
+            .map_err(|err| println!("Error: {}", err));
     }
 }
