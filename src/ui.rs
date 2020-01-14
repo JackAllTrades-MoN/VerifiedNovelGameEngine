@@ -64,7 +64,12 @@ pub fn load_tag<F: glium::backend::Facade>(display: &F,
             Some(mk_2d_image(display, cfg, &src, x, y, w, h))
         },
         vngl::InBody::Selection(tagsel) =>
-            None
+        {
+            let x = tagsel.x.unwrap_or(0);
+            let y = tagsel.y.unwrap_or(0);
+            let src = project_root + "/" + &tagsel.src;
+            Some(mk_2d_image(display, cfg, &src, x, y, None, None))
+        },
     }
 }
 

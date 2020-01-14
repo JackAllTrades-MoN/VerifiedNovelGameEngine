@@ -26,11 +26,29 @@ impl TagImg {
 }
 
 #[derive(Debug)]
+pub struct TagSelItem {
+    pub name: String,
+    pub label: String,
+}
+
+impl TagSelItem {
+    pub fn new(attributes: Vec<xml::attribute::OwnedAttribute>) -> OrError<TagSelItem> {
+        let mut it = attributes.into_iter();
+        let name = it.find(|attr| attr.name.local_name == "name")
+            .required("item", "name")?;
+        let label = it.find(|attr| attr.name.local_name == "label")
+            .required("item", "label")?;
+        Ok(TagSelItem { name: name.value, label: label.value })
+    }
+}
+
+#[derive(Debug)]
 pub struct TagSel {
     pub name: String,
     pub x: Option<u32>,
     pub y: Option<u32>,
     pub src: String,
+    pub items: Vec<TagSelItem>,
 }
 
 /*
@@ -50,7 +68,8 @@ impl TagSel {
         Ok(TagSel{name:name.value,
                   x: x.map(|x| x.value.parse().unwrap()),
                   y: y.map(|y| y.value.parse().unwrap()),
-                  src:src.value})
+                  src:src.value,
+                  items:Vec::new()})
     }
 }
 
@@ -92,6 +111,14 @@ impl Vngl {
                             let tagsel = TagSel::new(attributes)?;
                             buff.push(InBody::Selection(tagsel))
                         },
+                        "item" => {
+                            let tagselitem = TagSelItem::new(attributes)?;
+                            let idx = buff.len() - 1;
+                            match &mut buff[idx] {
+                                InBody::Selection(tagsel) => tagsel.items.push(tagselitem),
+                                _ => assert!(false),
+                            }
+                        },
                         _ => ()
                     }
                 },
@@ -99,6 +126,7 @@ impl Vngl {
                     println!("{}", name);
                     match name.local_name.as_ref() {
                         "body" => (),
+                        "item" => (),
                         _ => vngl.body.push(buff.pop().unwrap())
                     }
                 },
