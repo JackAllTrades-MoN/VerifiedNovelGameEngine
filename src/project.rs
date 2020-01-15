@@ -17,6 +17,7 @@ pub fn dir_of(filename: &str) -> String {
     sp.to_string()
 }
 
+#[derive(Debug)]
 pub struct Config {
     pub project_root: String,
     pub window_w: f64,
@@ -27,17 +28,20 @@ pub struct Config {
     pub fonts: Vec<(String, String)>
 }
 
+#[derive(Debug)]
 pub enum RawOrName<T> {
     Raw(T), // for embedded resources (in production environment)
     Name(String),
 }
 
+#[derive(Debug)]
 pub struct Scene {
     pub name: String,
     pub body: RawOrName<String>,
     pub layout: RawOrName<String>,
 }
 
+#[derive(Debug)]
 pub struct Project {
     pub config: Config,
     pub scene: Vec<Scene>,
