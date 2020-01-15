@@ -9,9 +9,11 @@ mod ui;
 mod vconfig;
 mod verror;
 mod vngl;
+mod project;
 
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};
+use project::Project;
 
 fn main() {
     let app = App::new("VeNGE a Verified Novel Game Engine")
@@ -23,7 +25,7 @@ fn main() {
             SubCommand::with_name("run")
                 .about("run a novel game scripts")
                 .arg(Arg::with_name("filename")
-                     .help("config file (.vngc)")
+                     .help("project file (.vproject)")
                      .required(true)
                 )
         )
@@ -52,7 +54,11 @@ fn main() {
         );
     let matches = app.get_matches();
     if let Some(ref _matches) = matches.subcommand_matches("run") {
-        println!("Run");
+        let project_file = matches.value_of("filename").unwrap();
+        let project = Project::load_project(&project_file);
+        project
+            .map(|_| println!("Run"))
+            .map_err(|err| println!("Error: {}", err));
     }
     if let Some(ref _matches) = matches.subcommand_matches("build") {
         println!("Build");

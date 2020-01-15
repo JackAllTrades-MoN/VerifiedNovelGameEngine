@@ -1,0 +1,10 @@
+[Common]
+window_w = 800
+window_h = 600
+title = "QuickStart"
+initial_scene = "title.scene"
+[Parameters]
+continue_cnt = 0
+[Fonts]
+jpnf = ""
+engf = ""
