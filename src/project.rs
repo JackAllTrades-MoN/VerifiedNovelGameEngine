@@ -20,8 +20,8 @@ pub fn dir_of(filename: &str) -> String {
 #[derive(Debug)]
 pub struct Config {
     pub project_root: String,
-    pub window_w: f64,
-    pub window_h: f64,
+    pub window_w: u32,
+    pub window_h: u32,
     pub title: String,
     pub initial_scene: String,
     pub params: Vec<(String, String)>,
@@ -50,7 +50,7 @@ pub struct Project {
 impl Config {
     pub fn default() -> Config {
         Config { project_root: DUMMYPATH.to_string(),
-                 window_w: 800.0, window_h: 600.0,
+                 window_w: 800, window_h: 600,
                  title: DUMMYTITLE.to_string(),
                  initial_scene: DUMMYPATH.to_string(),
                  params: Vec::new(),
@@ -100,5 +100,9 @@ impl Project {
         let config = Config::from_file(project_file)?;
         let project = Project { config: config, scene: Vec::new() };
         Ok(project)
+    }
+    pub fn scene_lookup(&self, scene_name: &str) -> Option<Scene> {
+        let it = self.scene.iter();
+        None
     }
 }

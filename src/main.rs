@@ -15,6 +15,15 @@ mod interpreter;
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};
 use project::Project;
+use interpreter::{Interpreter};
+use verror::{OrError};
+
+fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
+    let project_file = matches.value_of("filename").unwrap();
+    let project = Project::load_project(&project_file)?;
+    let interp = Interpreter::new(&project)?;
+    interp.run()
+}
 
 fn main() {
     let app = App::new("VeNGE a Verified Novel Game Engine")
@@ -54,11 +63,8 @@ fn main() {
                 )
         );
     let matches = app.get_matches();
-    if let Some(ref _matches) = matches.subcommand_matches("run") {
-        let project_file = matches.value_of("filename").unwrap();
-        let project = Project::load_project(&project_file);
-        project
-            .map(|_| println!("Run"))
+    if let Some(ref matches) = matches.subcommand_matches("run") {
+        run(matches)
             .map_err(|err| println!("Error: {}", err));
     }
     if let Some(ref _matches) = matches.subcommand_matches("build") {
