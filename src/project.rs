@@ -45,12 +45,12 @@ pub enum RawOrName<T> {
 pub struct Scene {
     pub name: String,
     pub body: RawOrName<String>,
-    pub layout: RawOrName<String>,
 }
 
 #[derive(Debug)]
 pub struct Project {
     pub config: Config,
+    pub layout: Vec<RawOrName<String>>,
     pub scene: Vec<Scene>,
 }
 
@@ -90,6 +90,7 @@ impl Project {
         let config = Config::from_file(project_file)?;
         let dir = std::fs::read_dir(project_dir)?;
         let mut scene = Vec::new();
+        let mut layout = Vec::new();
         for entry in dir {
             let entry = entry?;
             let path = entry.path();
@@ -99,12 +100,13 @@ impl Project {
                     scene.push(Scene{
                         name: path.file_name().unwrap().to_str().unwrap().to_string(),
                         body: RawOrName::Name(path.to_path_buf()),
-                        layout: RawOrName::Name(path.to_path_buf())
                     });
+                } else if(ext == ".vngl") {
+                    layout.push(RawOrName::Name(path.to_path_buf()))
                 }
             }
         }
-        let project = Project { config: config, scene: scene };
+        let project = Project { config: config, scene: scene, layout:layout };
         Ok(project)
     }
     pub fn scene_lookup(&self, scene_name: &str) -> Option<&Scene> {
