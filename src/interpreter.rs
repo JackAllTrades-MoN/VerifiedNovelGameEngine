@@ -1,10 +1,10 @@
-use std::cell::RefCell;
+//use std::cell::RefCell;
 
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::keyboard::Keycode;
 
-use crate::verror::{OrError};
+use crate::verror::{OrError, VError};
 use crate::project::{Project, Scene};
 
 
@@ -15,19 +15,19 @@ pub enum Value {
 }
 
 #[derive(Debug)]
-pub struct Interpreter<'a> {
+pub struct Interpreter <'a, 'b>{
     pub game: &'a Project,
-    pub cur_scene: RefCell<Scene>,
+    pub cur_scene: &'b Scene,
     pub vars: Vec<(String, Value)>,
 }
 
-impl<'a> Interpreter<'a> {
-    pub fn new(project: &Project) -> OrError<Interpreter> {
+impl<'a, 'b> Interpreter<'a, 'b> {
+    pub fn new(project: &'a Project) -> OrError<Interpreter<'a, 'a>> {
         let cfg = &project.config;
-        let cur_scene = project.scene_lookup(&cfg.initial_scene).unwrap();
-        let cur_scene_cell = RefCell::new(cur_scene);
+        let cur_scene = project.scene_lookup(&cfg.initial_scene)
+            .ok_or(VError::Other("initial_scene not found".to_string()))?;
         Ok(Interpreter {game: project,
-                        cur_scene: cur_scene_cell,
+                        cur_scene: cur_scene,
                         vars: Vec::new()})
     }
     pub fn run(self) -> OrError<()>{
