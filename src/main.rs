@@ -11,6 +11,7 @@ mod verror;
 mod vngl;
 mod project;
 mod interpreter;
+mod instruction;
 
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};

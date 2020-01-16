@@ -31,6 +31,7 @@ pub struct Config {
     pub window_h: u32,
     pub title: String,
     pub initial_scene: String,
+    pub initial_layout: String,
     pub params: Vec<(String, String)>,
     pub fonts: Vec<(String, String)>
 }
@@ -48,9 +49,15 @@ pub struct Scene {
 }
 
 #[derive(Debug)]
+pub struct Layout {
+    pub name: String,
+    pub body: RawOrName<String>,
+}
+
+#[derive(Debug)]
 pub struct Project {
     pub config: Config,
-    pub layout: Vec<RawOrName<String>>,
+    pub layout: Vec<Layout>,
     pub scene: Vec<Scene>,
 }
 
@@ -67,6 +74,8 @@ impl Config {
             .carequired(filename, "Common", "title")?;
         let initial_scene = common.get("initial_scene")
             .carequired(filename, "Common", "initial_scene")?;
+        let initial_layout = common.get("initial_layout")
+            .carequired(filename, "Common", "initial_layout")?;
 //        let project_root = Path::new(filename).canonicalize()?;
         let project_root = dir_of(filename)?;
         let cfg = Config {
@@ -75,11 +84,24 @@ impl Config {
             window_h: window_h.parse().unwrap(),
             title: title.to_string(),
             initial_scene: initial_scene.to_string(),
+            initial_layout: initial_layout.to_string(),
             params: Vec::new(),
             fonts: Vec::new()
         };
         Ok(cfg)
     }
+}
+
+pub fn load_files<T>(dir: &Path, ext: &str, f: fn(&Path) -> T) -> OrError<Vec<T>> {
+    let mut buff = Vec::<T>::new();
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if let Some(extt) = path.extension() {
+            if(extt == ext) { buff.push(f(&path)) }
+        }
+    }
+    Ok(buff)
 }
 
 impl Project {
@@ -94,15 +116,26 @@ impl Project {
         for entry in dir {
             let entry = entry?;
             let path = entry.path();
-            if let Some(ext) = path.extension() {
-                if(ext == "scene") {
-//                    println!("scene file: {}", path.to_str().unwrap())
-                    scene.push(Scene{
-                        name: path.file_name().unwrap().to_str().unwrap().to_string(),
-                        body: RawOrName::Name(path.to_path_buf()),
-                    });
-                } else if(ext == ".vngl") {
-                    layout.push(RawOrName::Name(path.to_path_buf()))
+            if path.is_dir() {
+                let dirname = path.file_name().unwrap().to_str().unwrap();
+                if(dirname == "layout") {
+                    layout =
+                        load_files(
+                            &path,
+                            "vngl",
+                            |lp| Layout{
+                                name:lp.file_name()
+                                    .unwrap().to_str().unwrap().to_string(),
+                                body:RawOrName::Name(lp.to_path_buf())})?;
+                } else if(dirname == "scene") {
+                    scene =
+                        load_files(
+                            &path,
+                            "scene",
+                            |sp| Scene {
+                                name:sp.file_name()
+                                    .unwrap().to_str().unwrap().to_string(),
+                                body:RawOrName::Name(sp.to_path_buf())})?;
                 }
             }
         }
@@ -112,5 +145,9 @@ impl Project {
     pub fn scene_lookup(&self, scene_name: &str) -> Option<&Scene> {
         let mut it = self.scene.iter();
         it.find(|scene| scene.name == scene_name)
+    }
+    pub fn layout_lookup(&self, layout_name: &str) -> Option<&Layout> {
+        let mut it = self.layout.iter();
+        it.find(|layout| layout.name == layout_name)
     }
 }
