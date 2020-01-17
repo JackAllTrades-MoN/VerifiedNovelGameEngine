@@ -1,8 +1,11 @@
 //use crate::ini::Ini;
 use std::{fmt, error};
 
+type CombErr<'a> =
+    combine::stream::easy::Errors<char, &'a str, combine::stream::PointerOffset>;
+
 #[derive(Debug)]
-pub enum VError {
+pub enum VError<'a> {
     FileNotFound(String),
     LoadCfg(ini::ini::Error),
     LackOfRequiredParameter(String, String),
@@ -11,12 +14,15 @@ pub enum VError {
     CfgRequiredAttribute(String, String, String), // (filename, section name, attribute name)
     IniError(ini::ini::Error),
     IOError(std::io::Error),
+    CombError(CombErr<'a>),
+    //CombError(combine::stream::easy::ParseError<String>),
     Other(String)
 }
 
-pub type OrError<T> = Result<T, VError>;
+pub type OrError<T> = Result<T, VError<'static>>;
+pub type OrError_<'a, T> = Result<T, VError<'a>>;
 
-impl fmt::Display for VError {
+impl<'a> fmt::Display for VError<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             VError::FileNotFound(ref err) => write!(f, "FileNotFound: {}", err),
@@ -37,12 +43,13 @@ impl fmt::Display for VError {
                        "CfgRequiredAttribute: A section {} in the project file {} requires the attribute {}", filename, section, aname),
             VError::IniError(ref err) => write!(f, "IniError: {}", err),
             VError::IOError(ref err) => write!(f, "IOError: {}", err),
+            VError::CombError(ref err) => write!(f, "CombError: {}", err),
             VError::Other(ref err) => write!(f, "OtherError: {}", err)
         }
     }
 }
 
-impl error::Error for VError {
+impl<'a> error::Error for VError<'a> {
     fn description(&self) -> &str {
         match *self {
             VError::FileNotFound(ref err) => &err,
@@ -51,6 +58,7 @@ impl error::Error for VError {
             VError::VNGLRequiredAttribute(_, _) => "Deprecated.",
             VError::IniError(ref err) => err.description(),
             VError::IOError(ref err) => err.description(),
+            VError::CombError(ref err) => err.description(),
             VError::Other(ref err) => &err,
             _ => "Deprecated.",
         }
@@ -65,21 +73,28 @@ impl error::Error for VError {
             VError::CfgRequiredAttribute(_, _, _) => None,
             VError::IniError(ref err) => Some(err),
             VError::IOError(ref err) => Some(err),
+            VError::CombError(ref err) => Some(err),
             VError::Other(ref _err) => None,
         }
     }
 }
 
-impl From<ini::ini::Error> for VError {
-    fn from(err: ini::ini::Error) -> VError {
+impl<'a> From<ini::ini::Error> for VError<'a> {
+    fn from(err: ini::ini::Error) -> VError<'static> {
         VError::IniError(err)
     }
 }
 
 
-impl From<std::io::Error> for VError {
-    fn from(err: std::io::Error) -> VError {
+impl<'a> From<std::io::Error> for VError<'a> {
+    fn from(err: std::io::Error) -> VError<'static> {
         VError::IOError(err)
+    }
+}
+
+impl<'a> From<CombErr<'a>> for VError<'a> {
+    fn from(err: CombErr<'a>) -> VError<'a> {
+        VError::CombError(err)
     }
 }
 
