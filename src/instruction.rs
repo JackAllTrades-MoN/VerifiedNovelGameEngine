@@ -2,7 +2,7 @@ use crate::project::Scene;
 use crate::verror::{OrError, OrError_, VError};
 
 use combine::parser::char::{spaces, digit, char};
-use combine::{many1, Parser, token, between};
+use combine::{many1, Parser, token, between, choice};
 //use combine::stream::easy;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -35,7 +35,11 @@ impl Instruction {
                     opname.skip(skip_spaces())
                     .and(oparg)
                     .map(|(name, arg)| Instruction::build(&name?, &arg)));
-        let (inst, rest) = instr.easy_parse(scene)?;
+        let mut dialog = many1::<String, _>(nonsymbol())
+            .map(|s| Ok(Instruction::UpdateText(s)));
+        let mut line = choice((instr, dialog));
+        let (inst, rest) = line.easy_parse(scene)?;
+        //let (inst, rest) = instr.easy_parse(scene)?;
         Ok((inst?, rest.to_string()))
     }
 }
@@ -54,6 +58,13 @@ mod tests {
     fn test2() -> OrError<()> {
         let (inst, rest) = Instruction::parse_line("[layout:title.vngl]")?;
         assert_eq!(inst, Instruction::LoadLayout("title.vngl".to_string()));
+        assert_eq!(rest, "".to_string());
+        Ok(())
+    }
+    #[test]
+    fn test3() -> OrError<()> {
+        let (inst, rest) = Instruction::parse_line("コマンド以外の文章")?;
+        assert_eq!(inst, Instruction::UpdateText("コマンド以外の文章".to_string()));
         assert_eq!(rest, "".to_string());
         Ok(())
     }
