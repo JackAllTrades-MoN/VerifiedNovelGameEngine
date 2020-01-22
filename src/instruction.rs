@@ -2,21 +2,41 @@ use crate::project::Scene;
 use crate::verror::{OrError, OrError_, VError};
 
 use combine::parser::char::{spaces, digit, char};
-use combine::{many1, Parser, token, between, choice};
+use combine::{many1, Parser, token, between, choice, parser};
+use combine::error::Consumed;
 //use combine::stream::easy;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Action {
+    JumpTo(String),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Choice {
+    pub name: String,
+    pub action: Action,
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Instruction {
     UpdateText(String),
     LoadLayout(String),
+    SetSelection(Vec<Choice>),
 }
 
 
 impl Instruction {
-    fn build(name: &str, arg: &str) -> OrError<Instruction> {
+/*    fn build(name: &str, arg: &str) -> OrError<Instruction> {
         match name {
             "layout" => Ok(Instruction::LoadLayout(arg.to_string())),
             _ => Err(VError::Other("unimplemented operator".to_string()))
+        }
+    }*/
+    fn builder(name: &str) -> OrError<fn(&str) -> Instruction> {
+        match name {
+            "layout" => Ok(move |arg: &str| Instruction::LoadLayout(arg.to_string())),
+            "selection" => Ok(move |_arg: &str| Instruction::SetSelection(vec![])),
+            _ => Err(VError::Other("undefined operator".to_string()))
         }
     }
     fn parse_line(scene: &str) -> OrError_<(Instruction, String)> {
@@ -25,8 +45,24 @@ impl Instruction {
         let mut opname =
             many1::<String, _>(nonsymbol())
             .skip(token(':'))
-            .map(|op: String| if op == "layout" { Ok(op) }
-                 else {Result::Err(VError::Other("invalid operation".to_string()))});
+            .map(|op: String| { Instruction::builder(&op) });
+/*
+            .then(|op: String| {
+                parser(move |input| {
+                    match &*op{
+                        "layout" => Ok((|arg: &str|
+                                        Instruction::LoadLayout(arg.to_string()),
+                                        Consumed::Empty(input))),
+                        "selection" => Ok((|_arg: &str|
+                                           Instruction::SetSelection(vec![]),
+                                           Consumed::Empty(input))),
+                        _ => unimplemented!(),
+                    }
+                })
+            }); */
+// Instruction::builder(&op));
+//            .map(|op: String| if op == "layout" { Ok(op) }
+//                 else {Result::Err(VError::Other("invalid operation".to_string()))});
         let skip_spaces = || spaces().silent();
         let oparg = many1::<String, _>(nonsymbol())
             .skip(skip_spaces());
@@ -34,10 +70,12 @@ impl Instruction {
             between(token('['), token(']'),
                     opname.skip(skip_spaces())
                     .and(oparg)
-                    .map(|(name, arg)| Instruction::build(&name?, &arg)));
+                    .map(|(build, arg)|
+                         build.map(|b| b(&arg))));
+                    /*.map(|(name, arg)| Instruction::build(&name?, &arg)));*/
         let mut dialog = many1::<String, _>(nonsymbol())
             .map(|s| Ok(Instruction::UpdateText(s)));
-        let mut line = choice((instr, dialog));
+        let mut line = spaces().with(choice((instr, dialog)));
         let (inst, rest) = line.easy_parse(scene)?;
         //let (inst, rest) = instr.easy_parse(scene)?;
         Ok((inst?, rest.to_string()))
@@ -66,6 +104,19 @@ mod tests {
         let (inst, rest) = Instruction::parse_line("コマンド以外の文章")?;
         assert_eq!(inst, Instruction::UpdateText("コマンド以外の文章".to_string()));
         assert_eq!(rest, "".to_string());
+        Ok(())
+    }
+    #[test]
+    fn test4() -> OrError<()> {
+//        let input_txt = "[selection:\n \"はじめから\", scene1;\n \"続きから\", load]";
+        let input_txt = r#"
+[selection:
+ "はじめから", scene1;
+ "続きから", load]
+"#;
+        let (inst, rest) = Instruction::parse_line(&input_txt)?;
+        println!("inst4: {:?}", inst);
+        assert_eq!(inst, Instruction::SetSelection(vec![]));
         Ok(())
     }
 }
