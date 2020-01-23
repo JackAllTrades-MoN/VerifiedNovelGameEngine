@@ -5,16 +5,15 @@ extern crate glium;
 extern crate xml;
 extern crate image;
 
-mod ui;
-mod vconfig;
+//mod ui;
+//mod vconfig;
+//mod vngl;
 mod verror;
-mod vngl;
 mod project;
 mod interpreter;
-//mod instruction;
 
+//use vconfig::{Config};
 use clap::{App, Arg, SubCommand, AppSettings};
-use vconfig::{Config};
 use project::Project;
 use interpreter::{Interpreter};
 use verror::{OrError, VError};
@@ -75,11 +74,11 @@ fn main() {
         println!("Build");
     }
     if let Some(ref matches) = matches.subcommand_matches("ui") {
-        println!("UI");
-        let cfgfile = matches.value_of("configfile").unwrap();
+        println!("unimplemented");
+/*        let cfgfile = matches.value_of("configfile").unwrap();
         let lfile = matches.value_of("filename").unwrap();
         Config::parse_from_file(&cfgfile)
             .and_then(|cfg| ui::from_file(&cfg, &lfile))
-            .map_err(|err| println!("Error: {}", err));
+            .map_err(|err| println!("Error: {}", err));*/
     }
 }

@@ -1,13 +1,15 @@
 mod dom;
 mod instr;
 pub mod memory;
+pub mod script;
 
 use sdl2::pixels::Color;
+use ini::Ini;
 
 use instr::Instruction;
 use dom::DOMTree;
 use memory::Memory;
-use crate::verror::{OrError, VError};
+use crate::verror::{OrError, VError, MayNecessary};
 
 pub enum IValue {
     IInt,
@@ -25,6 +27,7 @@ pub struct Interpreter {
     global_var: Vec<(String, IValue)>, // hash or AVT tree should be used.
 }
 
+#[derive(Debug)]
 pub struct Config {
     title: String,
     window_w: u32,
@@ -75,6 +78,23 @@ impl Interpreter {
         Err(VError::Unimplemented("interpreter.run()"))
     }
 }
+
+impl Config {
+    pub fn from_ini(filename: &str, ini: Ini) -> OrError<Config> {
+        let interp_cfg = ini.section(Some("Interpreter".to_string()))
+            .csrequired(filename, "Interpreter")?;
+        let window_w = interp_cfg.get("window_w")
+            .carequired(filename, "Interpreter", "window_w")?;
+        let window_h = interp_cfg.get("window_h")
+            .carequired(filename, "Interpreter", "window_h")?;
+        let title = interp_cfg.get("title")
+            .carequired(filename, "Interpreter", "title")?;
+        Ok(Config { title: title.to_string(),
+                    window_w: window_w.parse().unwrap(),
+                    window_h: window_h.parse().unwrap() })
+    }
+}
+
 
 mod tests {
     use super::*;
