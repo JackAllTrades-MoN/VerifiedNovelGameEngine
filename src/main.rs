@@ -16,12 +16,14 @@ mod interpreter;
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};
 use project::Project;
-//use interpreter::{Interpreter};
+use interpreter::{Interpreter};
 use verror::{OrError, VError};
 
 fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
     let project_file = matches.value_of("filename").unwrap();
     let project = Project::load_project(&project_file)?;
+    let interp = Interpreter::default()?;// TODO: should be replaced with new(cfg)
+    interp.run()?;
 //    let interp = Interpreter::new(&project)?;
 //    interp.run()
     Err(VError::Unimplemented("interpreter is not unimplemented"))

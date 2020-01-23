@@ -1,10 +1,13 @@
 mod dom;
 mod instr;
-mod memory;
+pub mod memory;
+
+use sdl2::pixels::Color;
 
 use instr::Instruction;
 use dom::DOMTree;
 use memory::Memory;
+use crate::verror::{OrError, VError};
 
 pub enum IValue {
     IInt,
@@ -16,32 +19,69 @@ pub struct Interpreter {
     sdl_context: sdl2::Sdl,
     canvas: sdl2::render::Canvas::<sdl2::video::Window>,
     epump: sdl2::EventPump,
-    instr: Memory,
+    memory: Memory,
     ip: u64, // instruction pointer
     dom: DOMTree,
     global_var: Vec<(String, IValue)>, // hash or AVT tree should be used.
 }
 
+pub struct Config {
+    title: String,
+    window_w: u32,
+    window_h: u32,
+}
+
 impl Interpreter {
-    pub fn new() -> Interpreter {
-        let (title, window_w, window_h) = ("dummy", 800, 600);
+    pub fn default() -> OrError<Interpreter> {
+        Interpreter::new(&Config{
+            title: "Dummy".to_string(), window_w: 800, window_h: 600})}
+    pub fn new(cfg: &Config) -> OrError<Interpreter> {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window(title, window_w, window_h)
+        let window = video_subsystem.window(&cfg.title, cfg.window_w, cfg.window_h)
             .position_centered()
             .build()
             .unwrap();
         let mut canvas = window.into_canvas().build().unwrap();
         let mut event_pump = sdl_context.event_pump().unwrap();
-        Interpreter {
+        Ok(Interpreter {
             sdl_context: sdl_context,
             canvas: canvas,
             epump: event_pump,
-            instr: Memory::new(),
+            memory: Memory::new(),
             ip: 0,
             dom: DOMTree::root(),
-            global_var: Vec::new(),
-        }
+            global_var: Vec::new(),})
+    }
+
+    pub fn update_screen(&mut self) -> () {
+        self.canvas.set_draw_color(Color::RGB(0, 255, 255));
+        self.canvas.clear();
+        self.canvas.present();
+    } 
+
+    pub fn run(self) -> OrError<()> {
+        let mut interp = self;
+        'running: loop {
+            let instr = interp.memory.fetch(interp.ip)?;
+            match instr {
+                UpdateGVar => {
+                    interp.update_screen();
+                },
+                Quit => break 'running,
+                _ => { Err(VError::Unimplemented("undefinied inistr"))? },
+            }
+        };
+        Err(VError::Unimplemented("interpreter.run()"))
+    }
+}
+
+mod tests {
+    use super::*;
+    #[test]
+    fn test1() -> OrError<()> {
+        let intp = Interpreter::new();
+        intp.run()
     }
 }
 
@@ -121,11 +161,3 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 }*/
-
-mod tests {
-    use super::*;
-    #[test]
-    fn test1() -> OrError<()> {
-        Ok(())
-    }
-}

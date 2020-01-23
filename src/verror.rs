@@ -1,6 +1,8 @@
 //use crate::ini::Ini;
 use std::{fmt, error};
 
+use crate::interpreter::memory;
+
 type CombErr<'a> =
     combine::stream::easy::Errors<char, &'a str, combine::stream::PointerOffset>;
 
@@ -15,6 +17,7 @@ pub enum VError<'a> {
     IniError(ini::ini::Error),
     IOError(std::io::Error),
     CombError(CombErr<'a>),
+    MemoryError(memory::Error),
     Unimplemented(&'static str),
     //CombError(combine::stream::easy::ParseError<String>),
     Other(String)
@@ -45,6 +48,7 @@ impl<'a> fmt::Display for VError<'a> {
             VError::IniError(ref err) => write!(f, "IniError: {}", err),
             VError::IOError(ref err) => write!(f, "IOError: {}", err),
             VError::CombError(ref err) => write!(f, "CombError: {}", err),
+            VError::MemoryError(ref err) => write!(f, "MemoryError: {}", err),
             VError::Unimplemented(ref msg) => write!(f, "Unimplemented: {}", msg), 
             VError::Other(ref err) => write!(f, "OtherError: {}", err)
         }
@@ -76,6 +80,7 @@ impl<'a> error::Error for VError<'a> {
             VError::IniError(ref err) => Some(err),
             VError::IOError(ref err) => Some(err),
             VError::CombError(ref err) => Some(err),
+            VError::MemoryError(ref err) => Some(err),
             VError::Unimplemented(ref _err) => None,
             VError::Other(ref _err) => None,
         }

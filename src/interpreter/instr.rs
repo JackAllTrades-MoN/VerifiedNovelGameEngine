@@ -9,6 +9,8 @@ pub enum Instruction {
     UpdateGVar,
     // continuation control
     Jmp,
+    SectionJmp,
+    Quit,
 }
 
 /*
