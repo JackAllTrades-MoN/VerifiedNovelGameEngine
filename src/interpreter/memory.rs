@@ -10,18 +10,22 @@ use crate::verror::VError;
 
 type OrError<T> = Result<T, Error>;
 
-pub enum Memory {
-    Memory(Vec<Instruction>),
+pub struct Memory {
+    body: Vec<Instruction>,
+    label: Vec<(String, usize)>,
 }
 
 impl Memory {
     pub fn new() -> Memory {
-        Memory::Memory(Vec::new())
+        Memory { body: Vec::new(), label: Vec::new() }
     }
     pub fn fetch(&self, ip: u64) -> OrError<&Instruction> {
-        let Memory::Memory(v) = self;
+        let v = &self.body;
         v.get(ip as usize)
             .ok_or(Error::OutOfMemory(ip))
+    }
+    pub fn load(&mut self, sec_name: &str, script: Vec<Instruction>) -> () {
+        ()
     }
 }
 

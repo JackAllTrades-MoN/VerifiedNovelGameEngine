@@ -8,15 +8,6 @@ static DUMMYFILE: &str = "dummy";
 //static DUMMYPATH: &Path = Path::new("dummy");
 static DUMMYTITLE: &str = "dummy";
 
-/*
-pub fn fullpath_of(filename: &str) -> OrError<std::path::PathBuf> {
-    // TODO: This is just stub implementation
-    let path = Path::new(filename);
-    let fullpath = path.canonicalize()?;
-    let parent = fullpath.parent().unwrap();
-    Ok(parent)
-}*/
-
 pub fn dir_of (filename: &str) -> OrError<std::path::PathBuf> {
     let path = Path::new(filename);
     let fullpath = path.canonicalize()?;

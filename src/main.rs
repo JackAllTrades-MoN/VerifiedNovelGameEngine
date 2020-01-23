@@ -32,7 +32,7 @@ fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
 fn main() {
     let app = App::new("VeNGE a Verified Novel Game Engine")
         .version("0.0.0")
-        .author("Jack Alltrades <kashiwagi513@gmail.com>")
+        .author("Jack Alltrades <magikku009@hotmail.co.jp>")
         .about("")
         .setting(AppSettings::ArgRequiredElseHelp)
         .subcommand(
