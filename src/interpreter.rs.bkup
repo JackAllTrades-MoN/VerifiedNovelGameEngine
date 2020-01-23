@@ -1,52 +1,5 @@
-mod dom;
-mod instr;
-mod memory;
-
-use instr::Instruction;
-use dom::DOMTree;
-use memory::Memory;
-
-pub enum IValue {
-    IInt,
-    IString,
-}
-
-pub struct Interpreter {
-    //for sdl
-    sdl_context: sdl2::Sdl,
-    canvas: sdl2::render::Canvas::<sdl2::video::Window>,
-    epump: sdl2::EventPump,
-    instr: Memory,
-    ip: u64, // instruction pointer
-    dom: DOMTree,
-    global_var: Vec<(String, IValue)>, // hash or AVT tree should be used.
-}
-
-impl Interpreter {
-    pub fn new() -> Interpreter {
-        let (title, window_w, window_h) = ("dummy", 800, 600);
-        let sdl_context = sdl2::init().unwrap();
-        let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window(title, window_w, window_h)
-            .position_centered()
-            .build()
-            .unwrap();
-        let mut canvas = window.into_canvas().build().unwrap();
-        let mut event_pump = sdl_context.event_pump().unwrap();
-        Interpreter {
-            sdl_context: sdl_context,
-            canvas: canvas,
-            epump: event_pump,
-            instr: Memory::new(),
-            ip: 0,
-            dom: DOMTree::root(),
-            global_var: Vec::new(),
-        }
-    }
-}
-
 //use std::cell::RefCell;
-/*
+
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::keyboard::Keycode;
@@ -54,9 +7,9 @@ use sdl2::keyboard::Keycode;
 use crate::verror::{OrError, VError};
 use crate::project::{Project, Scene, Layout};
 
-use create::instruction::{Instruction}; */
+use create::instruction::{Instruction};
 
-/*
+
 #[derive(Debug)]
 pub enum Value {
     VInt(i64),
@@ -118,14 +71,6 @@ impl<'a> Interpreter<'a> {
             }
             canvas.present();
         }
-        Ok(())
-    }
-}*/
-
-mod tests {
-    use super::*;
-    #[test]
-    fn test1() -> OrError<()> {
         Ok(())
     }
 }

@@ -11,19 +11,20 @@ mod verror;
 mod vngl;
 mod project;
 mod interpreter;
-mod instruction;
+//mod instruction;
 
 use clap::{App, Arg, SubCommand, AppSettings};
 use vconfig::{Config};
 use project::Project;
-use interpreter::{Interpreter};
-use verror::{OrError};
+//use interpreter::{Interpreter};
+use verror::{OrError, VError};
 
 fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
     let project_file = matches.value_of("filename").unwrap();
     let project = Project::load_project(&project_file)?;
-    let interp = Interpreter::new(&project)?;
-    interp.run()
+//    let interp = Interpreter::new(&project)?;
+//    interp.run()
+    Err(VError::Unimplemented("interpreter is not unimplemented"))
 }
 
 fn main() {

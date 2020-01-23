@@ -46,23 +46,6 @@ impl Instruction {
             many1::<String, _>(nonsymbol())
             .skip(token(':'))
             .map(|op: String| { Instruction::builder(&op) });
-/*
-            .then(|op: String| {
-                parser(move |input| {
-                    match &*op{
-                        "layout" => Ok((|arg: &str|
-                                        Instruction::LoadLayout(arg.to_string()),
-                                        Consumed::Empty(input))),
-                        "selection" => Ok((|_arg: &str|
-                                           Instruction::SetSelection(vec![]),
-                                           Consumed::Empty(input))),
-                        _ => unimplemented!(),
-                    }
-                })
-            }); */
-// Instruction::builder(&op));
-//            .map(|op: String| if op == "layout" { Ok(op) }
-//                 else {Result::Err(VError::Other("invalid operation".to_string()))});
         let skip_spaces = || spaces().silent();
         let oparg = many1::<String, _>(nonsymbol())
             .skip(skip_spaces());
@@ -79,6 +62,15 @@ impl Instruction {
         let (inst, rest) = line.easy_parse(scene)?;
         //let (inst, rest) = instr.easy_parse(scene)?;
         Ok((inst?, rest.to_string()))
+    }
+    pub fn parse_scene(scene: &Scene) -> OrError<Vec<Instruction>> {
+        match scene.body {
+            Raw(_) => unimplemented!(),
+            Name(path) => {
+                let mut scene_str = std::fs::read_to_string(path)?;
+                unimplemented!()
+            },
+        }
     }
 }
 
