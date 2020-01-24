@@ -24,8 +24,10 @@ impl Memory {
         v.get(ip as usize)
             .ok_or(Error::OutOfMemory(ip))
     }
-    pub fn load(&mut self, sec_name: &str, script: Vec<Instruction>) -> () {
-        ()
+    pub fn load(&mut self, sec_name: &str, script: &mut Vec<Instruction>) -> () {
+        let l = self.body.len();
+        self.label.push((sec_name.to_string(), l));
+        self.body.append(script)
     }
 }
 

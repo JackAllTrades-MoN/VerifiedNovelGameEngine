@@ -11,6 +11,7 @@ extern crate image;
 mod verror;
 mod project;
 mod interpreter;
+mod compiler;
 
 //use vconfig::{Config};
 use clap::{App, Arg, SubCommand, AppSettings};
@@ -21,7 +22,11 @@ use verror::{OrError, VError};
 fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
     let project_file = matches.value_of("filename").unwrap();
     let project = Project::load_project(&project_file)?;
-    let interp = Interpreter::default()?;// TODO: should be replaced with new(cfg)
+    let mut interp = Interpreter::default()?;// TODO: should be replaced with new(cfg)
+    for c in project.components.iter() {
+        let mut scr = c.load_script()?;
+        interp.memory.load(&scr.name, &mut scr.body);
+    }
     interp.run()?;
 //    let interp = Interpreter::new(&project)?;
 //    interp.run()

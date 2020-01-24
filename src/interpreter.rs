@@ -1,5 +1,5 @@
 mod dom;
-mod instr;
+pub mod instr;
 pub mod memory;
 pub mod script;
 
@@ -21,7 +21,7 @@ pub struct Interpreter {
     sdl_context: sdl2::Sdl,
     canvas: sdl2::render::Canvas::<sdl2::video::Window>,
     epump: sdl2::EventPump,
-    memory: Memory,
+    pub memory: Memory,
     ip: u64, // instruction pointer
     dom: DOMTree,
     global_var: Vec<(String, IValue)>, // hash or AVT tree should be used.

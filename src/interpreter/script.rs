@@ -3,8 +3,8 @@ use crate::verror::{OrError, VError};
 use super::instr::Instruction;
 
 pub struct Script {
-    name: String,
-    body: Vec<Instruction>,
+    pub name: String,
+    pub body: Vec<Instruction>,
 }
 
 impl Script {

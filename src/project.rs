@@ -1,10 +1,13 @@
 
 use std::path::{Path, PathBuf};
+use std::fs::{File};
 
 use ini::Ini;
 
 use crate::verror::{OrError};
 use crate::interpreter;
+use crate::interpreter::script::Script;
+use crate::compiler;
 
 //project configuration
 #[derive(Debug)]
@@ -51,6 +54,19 @@ impl Config {
         let cfg = Config { project_root: prj_root,
                            interp_cfg: interp_cfg };
         Ok(cfg)
+    }
+}
+
+impl Component {
+    pub fn load_script(&self) -> OrError<Script> {
+        match self {
+            Component::Scene{name: name, body: body} => {
+                let contents = std::fs::read_to_string(body)?;
+                let body = compiler::parse(&contents)?;
+                Ok(Script {name: name.to_string(),
+                           body: body})
+            },
+        }
     }
 }
 
