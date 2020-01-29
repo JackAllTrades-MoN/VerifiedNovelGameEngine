@@ -3,11 +3,11 @@ use std::{fmt, error};
 
 use crate::interpreter::memory;
 
-type CombErr<'a> =
-    combine::stream::easy::Errors<char, &'a str, combine::stream::PointerOffset>;
+type CombErr = String;
+//    combine::stream::easy::Errors<char, String, combine::stream::PointerOffset>;
 
 #[derive(Debug)]
-pub enum VError<'a> {
+pub enum VError {
     FileNotFound(String),
     LoadCfg(ini::ini::Error),
     LackOfRequiredParameter(String, String),
@@ -16,17 +16,18 @@ pub enum VError<'a> {
     CfgRequiredAttribute(String, String, String), // (filename, section name, attribute name)
     IniError(ini::ini::Error),
     IOError(std::io::Error),
-    CombError(CombErr<'a>),
+    CombError(CombErr),
     MemoryError(memory::Error),
     Unimplemented(&'static str),
     //CombError(combine::stream::easy::ParseError<String>),
     Other(String)
 }
 
-pub type OrError<T> = Result<T, VError<'static>>;
-pub type OrError_<'a, T> = Result<T, VError<'a>>;
+//pub type OrError<T> = Result<T, VError>;
+pub type OrError<T> = Result<T, VError>;
+//pub type OrError_<'a, T> = Result<T, VError<'a>>;
 
-impl<'a> fmt::Display for VError<'a> {
+impl fmt::Display for VError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             VError::FileNotFound(ref err) => write!(f, "FileNotFound: {}", err),
@@ -55,7 +56,7 @@ impl<'a> fmt::Display for VError<'a> {
     }
 }
 
-impl<'a> error::Error for VError<'a> {
+impl error::Error for VError {
     fn description(&self) -> &str {
         match *self {
             VError::FileNotFound(ref err) => &err,
@@ -64,7 +65,7 @@ impl<'a> error::Error for VError<'a> {
             VError::VNGLRequiredAttribute(_, _) => "Deprecated.",
             VError::IniError(ref err) => err.description(),
             VError::IOError(ref err) => err.description(),
-            VError::CombError(ref err) => err.description(),
+            VError::CombError(ref err) => "Deprecated.",
             VError::Other(ref err) => &err,
             _ => "Deprecated.",
         }
@@ -79,7 +80,7 @@ impl<'a> error::Error for VError<'a> {
             VError::CfgRequiredAttribute(_, _, _) => None,
             VError::IniError(ref err) => Some(err),
             VError::IOError(ref err) => Some(err),
-            VError::CombError(ref err) => Some(err),
+            VError::CombError(ref err) => None,
             VError::MemoryError(ref err) => Some(err),
             VError::Unimplemented(ref _err) => None,
             VError::Other(ref _err) => None,
@@ -87,22 +88,24 @@ impl<'a> error::Error for VError<'a> {
     }
 }
 
-impl<'a> From<ini::ini::Error> for VError<'a> {
-    fn from(err: ini::ini::Error) -> VError<'static> {
+impl<'a> From<ini::ini::Error> for VError {
+    fn from(err: ini::ini::Error) -> VError {
         VError::IniError(err)
     }
 }
 
 
-impl<'a> From<std::io::Error> for VError<'a> {
-    fn from(err: std::io::Error) -> VError<'static> {
+impl<'a> From<std::io::Error> for VError {
+    fn from(err: std::io::Error) -> VError {
         VError::IOError(err)
     }
 }
 
-impl<'a> From<CombErr<'a>> for VError<'a> {
-    fn from(err: CombErr<'a>) -> VError<'a> {
-        VError::CombError(err)
+impl<'a> From<combine::stream::easy::Errors<char, &str, combine::stream::PointerOffset>> for VError {
+    fn from(err: combine::stream::easy::Errors<char, &str, combine::stream::PointerOffset>) -> VError {
+        let it = err.errors.iter();
+        let errs = it.fold("".to_string(), |errs, err| errs + &format!("{}\n", err));
+        VError::CombError(errs)
     }
 }
 

@@ -51,8 +51,8 @@ impl error::Error for Error {
         match *self { Error::OutOfMemory(_mp) => None, }}
 }
 
-impl<'a> From<Error> for VError<'a> {
-    fn from(err: Error) -> VError<'static> {
+impl From<Error> for VError {
+    fn from(err: Error) -> VError {
         VError::MemoryError(err)
     }
 }
