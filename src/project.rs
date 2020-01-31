@@ -60,7 +60,7 @@ impl Config {
 impl Component {
     pub fn load_script(&self) -> OrError<Script> {
         match self {
-            Component::Scene{name: name, body: body} => {
+            Component::Scene{name, body} => {
                 let contents = std::fs::read_to_string(body)?;
                 let body = compiler::parse(&contents)?;
                 Ok(Script {name: name.to_string(),

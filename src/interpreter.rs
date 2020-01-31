@@ -2,28 +2,30 @@ mod dom;
 pub mod instr;
 pub mod memory;
 pub mod script;
+//pub mod drawable;
+pub mod screen;
 
-use sdl2::pixels::Color;
 use ini::Ini;
 
 use instr::Instruction;
-use dom::DOMTree;
 use memory::Memory;
 use crate::verror::{OrError, VError, MayNecessary};
+use screen::{Screen};
 
 pub enum IValue {
     IInt,
     IString,
 }
 
-pub struct Interpreter {
+pub struct Interpreter<'a, 'b> {
     //for sdl
-    sdl_context: sdl2::Sdl,
-    canvas: sdl2::render::Canvas::<sdl2::video::Window>,
-    epump: sdl2::EventPump,
+//    sdl_context: sdl2::Sdl,
+//    canvas: sdl2::render::Canvas::<sdl2::video::Window>,
+//    epump: sdl2::EventPump,
+    pub screen: Screen<'a, 'b>,
     pub memory: Memory,
     ip: u64, // instruction pointer
-    dom: DOMTree,
+    dom: dom::DOMTree,
     global_var: Vec<(String, IValue)>, // hash or AVT tree should be used.
 }
 
@@ -34,52 +36,46 @@ pub struct Config {
     window_h: u32,
 }
 
-impl Interpreter {
-    pub fn default() -> OrError<Interpreter> {
-        Interpreter::new(&Config{
-            title: "Dummy".to_string(), window_w: 800, window_h: 600})}
+impl<'a, 'b> Interpreter<'a, 'b> {
     pub fn new(cfg: &Config) -> OrError<Interpreter> {
-        let sdl_context = sdl2::init().unwrap();
-        let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window(&cfg.title, cfg.window_w, cfg.window_h)
-            .position_centered()
-            .build()
-            .unwrap();
-        let mut canvas = window.into_canvas().build().unwrap();
-        let mut event_pump = sdl_context.event_pump().unwrap();
-        Ok(Interpreter {
-            sdl_context: sdl_context,
-            canvas: canvas,
-            epump: event_pump,
-            memory: Memory::new(),
-            ip: 0,
-            dom: DOMTree::root(),
-            global_var: Vec::new(),})
+        let screen = Screen::new(&cfg.title, cfg.window_w, cfg.window_h)?;
+        let memory = Memory::new();
+        let ip = 0;
+        let dom = dom::root();
+        let global_var = Vec::new();
+        Ok(Interpreter {screen, memory, ip, dom, global_var})
     }
 
-    pub fn update_screen(&mut self) -> () {
-        self.canvas.set_draw_color(Color::RGB(0, 255, 255));
-        self.canvas.clear();
-        self.canvas.present();
-    } 
-
     pub fn run(self) -> OrError<()> {
+        use instr::Instruction;
         let mut interp = self;
         'running: loop {
             let instr = interp.memory.fetch(interp.ip)?;
+            println!("fetch: {:?}", &instr);
+            //println!("sdl2ver: {}", sdl2_ttf::get_linked_version());
             match instr {
-                UpdateGVar => {
-                    interp.update_screen();
+                Instruction::UpdateGVar => {
+                    interp.screen.update();
                 },
-                Quit => break 'running,
+                Instruction::UpdateDOMAttr(id, attr_name, value) => {
+                    let mut target = interp.dom.lookup_by_id(id)
+                        .ok_or(VError::Other("DOM Not found".to_string()))?;
+                    target.update_attr(attr_name, value.to_dom_value())?;
+                    interp.screen.update();
+                },
+                Instruction::Quit => { break 'running },
                 _ => { Err(VError::Unimplemented("undefinied inistr"))? },
             }
+            std::thread::sleep(std::time::Duration::from_millis(100));
         };
-        Err(VError::Unimplemented("interpreter.run()"))
+        Ok(())
     }
 }
 
 impl Config {
+    pub fn default() -> Config {
+        Config { title: "dummy".to_string(), window_w: 800, window_h:600 }
+    }
     pub fn from_ini(filename: &str, ini: Ini) -> OrError<Config> {
         let interp_cfg = ini.section(Some("Interpreter".to_string()))
             .csrequired(filename, "Interpreter")?;

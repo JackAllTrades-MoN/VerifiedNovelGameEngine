@@ -11,6 +11,11 @@ rust-ini = "*"
 xml-rs = "*"
 image = "*"
 glium_text = "*"
-sdl2 = "*"
+#sdl2 = "*"
 combine = "*"
 pest = "*"
+[dependencies.sdl2]
+version = "0.33"
+#version = "*"
+default-features = false
+features = ["ttf", "image"]
