@@ -18,10 +18,6 @@ pub enum IValue {
 }
 
 pub struct Interpreter<'a, 'b> {
-    //for sdl
-//    sdl_context: sdl2::Sdl,
-//    canvas: sdl2::render::Canvas::<sdl2::video::Window>,
-//    epump: sdl2::EventPump,
     pub screen: Screen<'a, 'b>,
     pub memory: Memory,
     ip: u64, // instruction pointer

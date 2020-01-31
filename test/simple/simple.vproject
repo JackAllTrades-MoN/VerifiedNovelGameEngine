@@ -1,11 +1,12 @@
+# あとで、InterpreterからVMに一斉に改名
+
 [Interpreter]
-window_w = 800
-window_h = 600
-title = "QuickStart"
 initial_scene = "title.scene"
 initial_layout = "title.vngl"
+  [Interpreter.Screen]
+  window_w = 800
+  window_h = 600
+  title = "QuickStart"
+  fonts = [["mplus", "mplus-1p-regular.ttf"]]
 [Parameters]
 continue_cnt = 0
-[Fonts]
-jpnf = ""
-engf = ""

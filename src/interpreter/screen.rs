@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+
+use ini::Ini;
 use sdl2::{Sdl, EventPump};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -11,6 +14,13 @@ pub struct Screen<'a, 'b> {
     canvas: Canvas::<Window>,
     epump: EventPump,
     fonts: Vec<Font<'a, 'b>>
+}
+
+pub struct Config {
+    title: String,
+    window_w: u32,
+    window_h: u32,
+    fonts: Vec<(String, PathBuf)>
 }
 
 impl<'a, 'b> Screen<'a, 'b> {
@@ -33,5 +43,24 @@ impl<'a, 'b> Screen<'a, 'b> {
         self.canvas.set_draw_color(Color::RGB(0, 255, 255));
         self.canvas.clear();
         self.canvas.present();
+    }
+}
+
+impl Config {
+    pub fn default() -> Config {
+        Config {title: "dummy".to_string(), window_w: 800, window_h: 600 }
+    }
+    pub fn from_ini(filename: &str, ini: Ini) -> OrError<Config> {
+        let screen_cfg = ini.section(Some("Screen".to_string()))
+            .csrequired(filename, "Interpreter")?;
+        let window_w = interp_cfg.get("window_w")
+            .carequired(filename, "Interpreter", "window_w")?;
+        let window_h = interp_cfg.get("window_h")
+            .carequired(filename, "Interpreter", "window_h")?;
+        let title = interp_cfg.get("title")
+            .carequired(filename, "Interpreter", "title")?;
+        Ok(Config { title: title.to_string(),
+                    window_w: window_w.parse().unwrap(),
+                    window_h: window_h.parse().unwrap() })
     }
 }
