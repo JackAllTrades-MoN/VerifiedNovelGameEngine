@@ -3,17 +3,19 @@ use std::path::{Path, PathBuf};
 use std::fs::{File};
 
 use ini::Ini;
+use serde_derive::Deserialize;
 
 use crate::verror::{OrError};
-use crate::interpreter;
-use crate::interpreter::script::Script;
+//use crate::interpreter;
+//use crate::interpreter::script::Script;
+use crate::vm;
 use crate::compiler;
 
 //project configuration
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub project_root: PathBuf,
-    pub interp_cfg: interpreter::Config,
+    pub vm_config: vm::Config,
 }
 
 #[derive(Debug)]
@@ -45,17 +47,17 @@ pub fn load_files<T>(dir: &Path, ext: &str, f: fn(&Path) -> T) -> OrError<Vec<T>
     }
     Ok(buff)
 }
-
+/*
 impl Config {
     pub fn from_file(project_file: &str) -> OrError<Config> {
         let conf = Ini::load_from_file(project_file)?;
         let prj_root = dir_of(project_file)?;
-        let interp_cfg = interpreter::Config::from_ini(project_file, conf)?;
+        let interp_cfg = vm::Config::from_toml(project_file, conf)?;
         let cfg = Config { project_root: prj_root,
                            interp_cfg: interp_cfg };
         Ok(cfg)
     }
-}
+} */
 
 impl Component {
     pub fn load_script(&self) -> OrError<Script> {
