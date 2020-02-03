@@ -1,14 +1,16 @@
 extern crate clap;
 extern crate xml;
+/*#[macro_use]
+extern crate serde_derive;*/
 
 mod verror;
 mod project;
 mod vm;
-//mod compiler;
+mod compiler;
 
 //use vconfig::{Config};
 use clap::{App, Arg, SubCommand, AppSettings};
-use project::Project;
+//use project::Project;
 use verror::{OrError, VError};
 use vm::VM;
 
@@ -30,7 +32,9 @@ fn run (matches: &&clap::ArgMatches<'_>) -> OrError<()> {
 
 fn test_interp (_matches: &&clap::ArgMatches<'_>) -> OrError<()> {
     use vm::instr::Instruction;
-    let mut test_code = vec![Instruction::Quit];
+    let mut test_code = vec![
+        Instruction::UpdateGVar,
+        Instruction::Quit];
     let dummy_cfg = vm::Config::default();
     let mut vm = VM::new(&dummy_cfg)?;
     vm.memory.load("entry", &mut test_code);

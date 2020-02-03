@@ -1,7 +1,7 @@
 //use crate::ini::Ini;
 use std::{fmt, error};
 
-use crate::interpreter::memory;
+use crate::vm::memory;
 
 type CombErr = String;
 //    combine::stream::easy::Errors<char, String, combine::stream::PointerOffset>;
@@ -9,12 +9,13 @@ type CombErr = String;
 #[derive(Debug)]
 pub enum VError {
     FileNotFound(String),
-    LoadCfg(ini::ini::Error),
+//    LoadCfg(ini::ini::Error),
     LackOfRequiredParameter(String, String),
     VNGLRequiredAttribute(String, String),// (tag name, attribute name)
     CfgRequiredSection(String, String), // (filename, section name)
     CfgRequiredAttribute(String, String, String), // (filename, section name, attribute name)
-    IniError(ini::ini::Error),
+//    IniError(ini::ini::Error),
+    TomlError(toml::de::Error),
     IOError(std::io::Error),
     CombError(CombErr),
     MemoryError(memory::Error),
@@ -31,7 +32,7 @@ impl fmt::Display for VError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             VError::FileNotFound(ref err) => write!(f, "FileNotFound: {}", err),
-            VError::LoadCfg(ref err) => write!(f, "LoadConfigError: {}", err),
+//            VError::LoadCfg(ref err) => write!(f, "LoadConfigError: {}", err),
             VError::LackOfRequiredParameter(ref param, ref filename) =>
                 write!(f,
                        "Parameter {} doesn't exist in the given configuration file: {}",
@@ -46,7 +47,8 @@ impl fmt::Display for VError {
             VError::CfgRequiredAttribute(ref filename, ref section, ref aname) =>
                 write!(f,
                        "CfgRequiredAttribute: A section {} in the project file {} requires the attribute {}", filename, section, aname),
-            VError::IniError(ref err) => write!(f, "IniError: {}", err),
+//            VError::IniError(ref err) => write!(f, "IniError: {}", err),
+            VError::TomlError(ref err) => write!(f, "TomlError: {}", err),
             VError::IOError(ref err) => write!(f, "IOError: {}", err),
             VError::CombError(ref err) => write!(f, "CombError: {}", err),
             VError::MemoryError(ref err) => write!(f, "MemoryError: {}", err),
@@ -60,10 +62,11 @@ impl error::Error for VError {
     fn description(&self) -> &str {
         match *self {
             VError::FileNotFound(ref err) => &err,
-            VError::LoadCfg(ref err) => err.description(),
+//            VError::LoadCfg(ref err) => err.description(),
             VError::LackOfRequiredParameter(ref param, ref filename) => &param,
             VError::VNGLRequiredAttribute(_, _) => "Deprecated.",
-            VError::IniError(ref err) => err.description(),
+//            VError::IniError(ref err) => err.description(),
+            VError::TomlError(ref err) => err.description(),
             VError::IOError(ref err) => err.description(),
             VError::CombError(ref err) => "Deprecated.",
             VError::Other(ref err) => &err,
@@ -73,12 +76,13 @@ impl error::Error for VError {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             VError::FileNotFound(ref _err) => None,
-            VError::LoadCfg(ref err) => Some(err),
+//            VError::LoadCfg(ref err) => Some(err),
             VError::LackOfRequiredParameter(ref _param, ref _filename) => None,
             VError::VNGLRequiredAttribute(_, _) => None,
             VError::CfgRequiredSection(_, _) => None,
             VError::CfgRequiredAttribute(_, _, _) => None,
-            VError::IniError(ref err) => Some(err),
+//            VError::IniError(ref err) => Some(err),
+            VError::TomlError(ref err) => Some(err),
             VError::IOError(ref err) => Some(err),
             VError::CombError(ref err) => None,
             VError::MemoryError(ref err) => Some(err),
@@ -87,13 +91,19 @@ impl error::Error for VError {
         }
     }
 }
-
+/*
 impl<'a> From<ini::ini::Error> for VError {
     fn from(err: ini::ini::Error) -> VError {
         VError::IniError(err)
     }
-}
+}*/
 
+
+impl From<toml::de::Error> for VError {
+    fn from(err: toml::de::Error) -> VError {
+        VError::TomlError(err)
+    }
+}
 
 impl<'a> From<std::io::Error> for VError {
     fn from(err: std::io::Error) -> VError {

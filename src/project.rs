@@ -1,14 +1,17 @@
 
-use std::path::{Path, PathBuf};
-use std::fs::{File};
 
-use ini::Ini;
+use std::path::{Path, PathBuf};
+//use std::fs::{File};
+
+//use ini::Ini;
+use toml;
 use serde_derive::Deserialize;
 
 use crate::verror::{OrError};
 //use crate::interpreter;
 //use crate::interpreter::script::Script;
 use crate::vm;
+use crate::vm::script::Script;
 use crate::compiler;
 
 //project configuration
@@ -74,7 +77,9 @@ impl Component {
 
 impl Project {
     pub fn load_project(project_file: &str) -> OrError<Project> {
-        let cfg = Config::from_file(project_file)?;
+        let s = std::fs::read_to_string(project_file)?;
+        let cfg : Config = toml::from_str(&s)?;
+//        let cfg = Config::from_file(project_file)?;
         let project_dir = dir_of(project_file)?;
         let dir = std::fs::read_dir(project_dir)?;
         let mut components = Vec::new();

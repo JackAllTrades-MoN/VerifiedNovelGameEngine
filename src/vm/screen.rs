@@ -1,6 +1,6 @@
-use std::path::{Path, PathBuf};
+pub mod config;
+pub mod drawable;
 
-use serde_derive::Deserialize;
 use sdl2::{Sdl, EventPump};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -8,20 +8,17 @@ use sdl2::ttf::Font;
 use sdl2::pixels::Color;
 
 use crate::verror::OrError;
+use drawable::Drawable;
+use super::dom::DOMTree;
+
+pub type Config = config::Config;
 
 pub struct Screen<'a, 'b> {
-    sdl_context: Sdl,
-    canvas: Canvas::<Window>,
-    epump: EventPump,
-    fonts: Vec<Font<'a, 'b>>
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Config {
-    title: String,
-    window_w: u32,
-    window_h: u32,
-    fonts: Vec<(String, PathBuf)>
+    pub sdl_context: Sdl,
+    pub canvas: Canvas::<Window>,
+    pub epump: EventPump,
+    pub fonts: Vec<Font<'a, 'b>>,
+    pub drawable: Vec<Drawable<'a>>,
 }
 
 impl<'a, 'b> Screen<'a, 'b> {
@@ -29,29 +26,27 @@ impl<'a, 'b> Screen<'a, 'b> {
         let sdl_context = sdl2::init().unwrap();
         let ttf_context = sdl2::ttf::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-        let window = video_subsystem.window(title, window_w, window_h)
+        let window = video_subsystem.window(&cfg.title, cfg.window_w, cfg.window_h)
             .position_centered()
             .build()
             .unwrap();
         let canvas = window.into_canvas().build().unwrap();
         let epump = sdl_context.event_pump().unwrap();
         let fonts = Vec::new();
-        Ok(Screen{sdl_context, canvas, epump, fonts})
+        let drawable = Vec::new();
+        Ok(Screen{sdl_context, canvas, epump, fonts, drawable})
     }
     pub fn update(&mut self) -> () {
         self.canvas.set_draw_color(Color::RGB(0, 255, 255));
         self.canvas.clear();
+        let it = self.drawable.iter();
+        for d in it {
+            d.draw(&mut self.canvas);
+        }
         self.canvas.present();
     }
-}
-
-impl Config {
-    pub fn default() -> Config {
-        let title = "dummy".to_string();
-        let (window_w, window_h) = (800, 600);
-        let path = Path::new("./font/mplus-1p-regular.ttf").canonicalize()?;
-        let pathbuf = path.to_path_buf();
-        let fonts = vec![("mplus".to_string, pathbuf)];
-        Config { title, window_w, window_h, fonts }
+    pub fn update_drawable(&mut self, dom: &'a DOMTree) -> () {
+        let new_drawable = drawable::from_dom(dom);
+        self.drawable = new_drawable;
     }
 }

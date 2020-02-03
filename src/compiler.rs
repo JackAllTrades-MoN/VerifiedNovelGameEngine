@@ -3,9 +3,9 @@ use combine::parser::char::{spaces, digit, char};
 use combine::{many1, Parser, token, between, choice, parser};
 
 use crate::verror::{VError, OrError};
-use crate::project::Component;
-use crate::interpreter::script::Script;
-use crate::interpreter::instr::Instruction;
+//use crate::project::Component;
+//use crate::vm::script::Script;
+use crate::vm::instr::Instruction;
 
 pub fn op_builder(name: &str) -> OrError<fn(&str) -> Instruction> {
     match name {
@@ -59,7 +59,7 @@ pub fn parse (src: &str) -> OrError<Vec<Instruction>> {
     loop {
         let (instr, rest) = parse_line(src)?;
         buf.push(instr);
-        if(rest.len() <= 0) { break; }
+        if rest.len() <= 0 { break; }
     };
     Ok(buf)
 }
