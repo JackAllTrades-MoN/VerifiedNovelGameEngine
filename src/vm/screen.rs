@@ -2,7 +2,7 @@ pub mod config;
 pub mod drawable;
 
 use sdl2::{Sdl, EventPump};
-use sdl2::render::Canvas;
+use sdl2::render::{Texture, Canvas};
 use sdl2::video::Window;
 use sdl2::ttf::Font;
 use sdl2::pixels::Color;
@@ -18,6 +18,7 @@ pub struct Screen<'a, 'b> {
     pub canvas: Canvas::<Window>,
     pub epump: EventPump,
     pub fonts: Vec<Font<'a, 'b>>,
+    pub textures: Vec<(String, Texture<'a>)>,
     pub drawable: Vec<Drawable<'a>>,
 }
 
@@ -34,7 +35,8 @@ impl<'a, 'b> Screen<'a, 'b> {
         let epump = sdl_context.event_pump().unwrap();
         let fonts = Vec::new();
         let drawable = Vec::new();
-        Ok(Screen{sdl_context, canvas, epump, fonts, drawable})
+        let textures = Vec::new();
+        Ok(Screen{sdl_context, canvas, epump, fonts, drawable, textures})
     }
     pub fn update(&mut self) -> () {
         self.canvas.set_draw_color(Color::RGB(0, 255, 255));

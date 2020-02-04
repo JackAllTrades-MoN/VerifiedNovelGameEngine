@@ -1,9 +1,12 @@
+use std::path::{PathBuf};
+
 /// # Instruction 
 use super::dom::{DOMTree, DOMValue};
 
 // Primitives
 #[derive(Debug)]
 pub enum Instruction {
+    LoadTexture(String, PathBuf),
     // DOM control
     UpdateDOMAttr(String, String, Value), //DOM id, attribute name, update value
     PutChild(String, DOMTree),

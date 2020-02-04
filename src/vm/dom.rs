@@ -5,14 +5,14 @@ pub type DOMTree = DOMNode;
 pub type DOMAttribute = (String, DOMValue);
 
 #[derive(Debug)]
-pub enum DOMType { Root, General, Txt }
+pub enum DOMType { Root, General, Txt, Dialog }
 
 #[derive(Debug)]
 pub struct DOMNode {
-    dom_type: DOMType,
+    pub dom_type: DOMType,
     id: String,
     name: String,
-    children: Vec<DOMNode>,
+    pub children: Vec<DOMNode>,
     attributes: Vec<DOMAttribute>
 }
 
