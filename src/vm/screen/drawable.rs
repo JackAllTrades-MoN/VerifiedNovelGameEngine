@@ -7,7 +7,7 @@ use sdl2::ttf::Font;
 use crate::vm::dom::{DOMTree, DOMType};
 
 pub enum Drawable<'a> {
-    Dialog{text: String},
+    Dialog{text: String, font: Font<'a, 'static>},
     Img{texture: Texture<'a>, src: Option<Rect>, dst: Option<Rect>}
 }
 
@@ -55,11 +55,11 @@ impl<'a> Drawable<'a> {
     pub fn draw(&self, canvas: &mut Canvas::<Window>) -> () {
         //canvas.copy(&self.texture, self.src, self.dst).unwrap();
         match self {
-            Drawable::Dialog{text: text} => {
-                let ttf_context = sdl2::ttf::init().unwrap();
+            Drawable::Dialog{text: text, font: font} => {
+//                let ttf_context = sdl2::ttf::init().unwrap();
                 let texture_creator = canvas.texture_creator();
-                let mut font = ttf_context.load_font("./font/mplus-1p-regular.ttf", 128)
-                    .unwrap();
+/*                let mut font = ttf_context.load_font("./font/mplus-1p-regular.ttf", 128)
+                    .unwrap();*/
                 let surface = font.render(text)
                     .blended(Color::RGBA(0, 0, 0, 255)).unwrap();
                 let texture =

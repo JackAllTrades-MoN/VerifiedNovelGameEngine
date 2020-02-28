@@ -7,6 +7,7 @@ use super::dom::{DOMTree, DOMValue};
 #[derive(Debug)]
 pub enum Instruction {
     LoadTexture(String, PathBuf),
+    LoadFont(String, PathBuf),
     // DOM control
     UpdateDOMAttr(String, String, Value), //DOM id, attribute name, update value
     PutChild(String, DOMTree),
