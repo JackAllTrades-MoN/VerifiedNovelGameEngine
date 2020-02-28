@@ -1,7 +1,0 @@
-[Common]
-window_w = 800
-window_h = 600
-title = "Sample Game"
-start_point = "title.vng"
-[Parameters]
-continue_cnt = 0

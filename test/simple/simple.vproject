@@ -1,9 +1,0 @@
-initial_scene = "title.scene"
-initial_layout = "title.vngl"
-[vm]
-  global_vars = []
-  [vm.screen]
-  window_w = 800
-  window_h = 600
-  title = "QuickStart"
-  fonts = [["mplus", "mplus-1p-regular.ttf"]]
