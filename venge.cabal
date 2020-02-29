@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 66d7fa4211dbc2c7b6e8ee8ddbf3a609791d74740376516866a304b3f7df3945
+-- hash: d5201776f483d57c10d692370aa744f2affd296be98f20243fc30850b4404a35
 
 name:           venge
 version:        0.1.0.0
@@ -34,17 +34,20 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , optparse-applicative
   default-language: Haskell2010
 
 executable venge-exe
   main-is: Main.hs
   other-modules:
+      VConfig
       Paths_venge
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , optparse-applicative
     , venge
   default-language: Haskell2010
 
@@ -58,5 +61,6 @@ test-suite venge-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , optparse-applicative
     , venge
   default-language: Haskell2010
