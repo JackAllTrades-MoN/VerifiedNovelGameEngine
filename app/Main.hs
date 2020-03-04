@@ -29,8 +29,9 @@ build _ = putStrLn "BUIIIILD"
 
 debug :: () -> IO ()
 debug () = do
-  putStrLn ""
-debug _ = putStrLn "DEBUUUUUG"
+  putStrLn "Run for Debug"
+  
+-- debug _ = putStrLn "DEBUUUUUG"
 
 main :: IO ()
 main =
