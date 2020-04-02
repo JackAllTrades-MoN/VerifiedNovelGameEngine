@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fac0cf97838810d6f367f58d21cf588f232ec3f964fd587b0066babc5a4d3e09
+-- hash: ac892b57c4f705366e3c95fa837f39064713fffa61abfc4f2f1b5c2fc0e6d29e
 
 name:           venge
 version:        0.1.0.0
@@ -36,6 +36,8 @@ library
       base >=4.7 && <5
     , optparse-applicative
     , sdl2
+    , sdl2-ttf
+    , text
   default-language: Haskell2010
 
 executable venge-exe
@@ -51,6 +53,8 @@ executable venge-exe
       base >=4.7 && <5
     , optparse-applicative
     , sdl2
+    , sdl2-ttf
+    , text
     , venge
   default-language: Haskell2010
 
@@ -66,5 +70,7 @@ test-suite venge-test
       base >=4.7 && <5
     , optparse-applicative
     , sdl2
+    , sdl2-ttf
+    , text
     , venge
   default-language: Haskell2010
