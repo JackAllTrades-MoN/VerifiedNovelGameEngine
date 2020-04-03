@@ -3,26 +3,41 @@
 module Main where
 
 import SDL
+import SDL.Raw (renderCopy, Rect(..))
 import SDL.Font
+import SDL.Video
+import SDL.Video.Renderer
 
 import Lib
 import Options.Applicative
-import Data.Semigroup ((<>))
+import Data.Semigroup ((<>), Any(..), Sum(..))
 import VConfig
 import Data.Text
+import Control.Monad
 
 red :: SDL.Font.Color
 red = SDL.V4 255 0 0 0
+black = SDL.V4 0 0 0 0
 
+{-
 printMsg :: SDL.Window -> SDL.Font.Color -> Int -> Text -> IO ()
 printMsg window color size msg = do
   font <- SDL.Font.load "font/mplus-1p-regular.ttf" size
-  text <- SDL.Font.solid font color msg
+  text <- SDL.Font.solid font color msg -- surface
   SDL.Font.free font
+  txtr <- SDL.cr
   screen <- SDL.getWindowSurface window
   SDL.surfaceBlit text Nothing screen Nothing
   SDL.freeSurface text
-  SDL.updateWindowSurface window
+  SDL.updateWindowSurface window -}
+
+printMsg :: SDL.Renderer -> SDL.Font.Color -> Int -> Text -> IO ()
+printMsg renderer color size msg = do
+  font <- SDL.Font.load "font/mplus-1p-regular.ttf" size
+  surface <- SDL.Font.solid font color msg
+  txtr <- SDL.createTextureFromSurface renderer surface
+  let rect = SDL.Rectangle (P $ V2 0 0) (V2 100 100)
+  SDL.copy renderer txtr Nothing (Just rect)
 
 buildOptions :: Parser Options
 buildOptions = pure $ Options Build
@@ -46,34 +61,40 @@ run _ = putStrLn "RUUUUUUN"
 build :: () -> IO ()
 build _ = putStrLn "BUIIIILD"
 
+rdrConfig = SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedRenderer }
+
 debug :: () -> IO ()
 debug () = do
   SDL.initialize [SDL.InitVideo]
   SDL.Font.initialize
   window <- createWindow "VeNGE" SDL.defaultWindow
+  renderer <- SDL.createRenderer window (-1) rdrConfig 
+  let col = SDL.rendererDrawColor renderer
+  col $= black
   SDL.showWindow window
-  printMsg window red 20 "hoge"
-  appLoop
+  appLoop renderer
+  SDL.destroyRenderer renderer
   SDL.destroyWindow window
   SDL.Font.quit
   SDL.quit
-{-  
-  initializeAll
-  window <- createWindow "VeNGE" WindowConfig {
-      windowBorder          = True
-    , windowHighDPI         = False
-    , windowInputGrabbed    = False
-    , windowMode            = Windowed
-    , windowGraphicsContext = NoGraphicsContext
-    , windowPosition        = Wherever
-    , windowResizable       = True
-    , windowInitialSize     = V2 800 600
-    , windowVisible         = True
-  }
-  renderer <- createRenderer window (-1) defaultRenderer
-  appLoop
--}
 
+appLoop :: SDL.Renderer -> IO ()
+appLoop renderer = do
+  ev <- SDL.pollEvents
+  let (Any quit, Sum ct) =
+        foldMap ((\e -> case e of
+          SDL.QuitEvent -> (Any True, Sum 0)
+          KeyboardEvent kev 
+            | keyboardEventKeyMotion kev == Pressed &&
+              keysymKeycode (keyboardEventKeysym kev) == KeycodeQ
+            -> (Any True, Sum 0) 
+          _ -> (Any False, Sum 0)) . SDL.eventPayload) ev
+  SDL.clear renderer
+  printMsg renderer red 20 "hoge"
+  SDL.present renderer
+  unless quit $ appLoop renderer
+
+{-
 appLoop :: IO ()
 appLoop = waitEvent >>= go
   where
@@ -85,6 +106,7 @@ appLoop = waitEvent >>= go
           keysymKeycode (keyboardEventKeysym keyboardEvent) == KeycodeQ
         -> return ()
       _ -> waitEvent >>= go
+-}
 
 main :: IO ()
 main =
