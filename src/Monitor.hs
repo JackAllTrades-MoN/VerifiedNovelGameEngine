@@ -5,9 +5,11 @@ module Monitor where
 import SDL
 import SDL.Font
 import Data.Text
+import Data.Maybe (fromMaybe)
 import SDL.Video.Renderer (surfaceDimensions)
 import Foreign.C.Types (CInt, CInt(..))
 import Unsafe.Coerce (unsafeCoerce)
+import SDL.Image
 
 import AMachine
 import AMachine.DOM as DOM
@@ -29,6 +31,15 @@ printMsg renderer color x y size msg = do
   let rect = SDL.Rectangle (P $ SDL.V2 (unsafeCoerce x) (unsafeCoerce y)) dim
   SDL.copy renderer txtr Nothing (Just rect)
 
+printPicture :: SDL.Renderer -> Int -> Int -> Maybe Int -> Maybe Int -> FilePath -> IO ()
+printPicture renderer x y w h filePath = do
+  surface <- SDL.Image.load filePath
+  SDL.V2 w' h' <- SDL.Video.Renderer.surfaceDimensions surface
+  txtr <- SDL.createTextureFromSurface renderer surface
+  let dim  = SDL.V2 (fromMaybe w' (fmap unsafeCoerce w)) (fromMaybe h' (fmap unsafeCoerce h))
+      rect = SDL.Rectangle (P $ SDL.V2 (unsafeCoerce x) (unsafeCoerce y)) dim
+  SDL.copy renderer txtr Nothing (Just rect)
+
 printDOMTree :: SDL.Renderer -> DOM.DOMTree -> IO ()
 printDOMTree renderer dom @ DOM.DOMTree { element = EText {} } = do
   let e = element dom
@@ -36,7 +47,10 @@ printDOMTree renderer dom @ DOM.DOMTree { element = EText {} } = do
   printMsg renderer (toSDLColor $ color e) x y (fontSize e) (value e)
   mapM_ (printDOMTree renderer) $ children dom
 
---  value :: Text, size :: Int, color :: V4, position :: V2
+printDOMTree renderer dom @ DOM.DOMTree { element = EPicture {} } = do
+  let e = element dom
+      DOM.V2 x y = position e
+  printPicture renderer x y (w e) (h e) $ src e
 
 printDOMTree renderer dom =
   mapM_ (printDOMTree renderer) $ children dom
