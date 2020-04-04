@@ -36,7 +36,7 @@ printPicture renderer x y w h filePath = do
   surface <- SDL.Image.load filePath
   SDL.V2 w' h' <- SDL.Video.Renderer.surfaceDimensions surface
   txtr <- SDL.createTextureFromSurface renderer surface
-  let dim  = SDL.V2 (fromMaybe w' (fmap unsafeCoerce w)) (fromMaybe h' (fmap unsafeCoerce h))
+  let dim  = SDL.V2 (maybe w' unsafeCoerce w) (maybe h' unsafeCoerce h)
       rect = SDL.Rectangle (P $ SDL.V2 (unsafeCoerce x) (unsafeCoerce y)) dim
   SDL.copy renderer txtr Nothing (Just rect)
 

@@ -30,10 +30,10 @@ addChildren parent children' = parent { children = children parent ++ children' 
 
 testTree :: DOMTree
 testTree =
-    let e = EText { value    = "hello"
+    let e = EText { value    = "これは日本語のサンプルです"
                   , fontSize = 20
                   , color    = V4 255 100 0 0
-                  , position = V2 10 20 }
+                  , position = V2 40 440 }
         ew = EText { value    = "world"
                    , fontSize = 30
                    , color    = V4 0 255 255 0
@@ -54,4 +54,12 @@ testTree =
                                  , w = Just 800
                                  , h = Just 600 }
                      , children = []}
-    in addChildren AMachine.DOM.init [bg, hello, world]
+        dialog = DOMTree { domid   = "dialog"
+                         , name    = "dialog"
+                         , element = EPicture
+                                 { src = "test/img/wafu2.png"
+                                 , position = V2 0 400
+                                 , w = Just 800
+                                 , h = Just 200 }
+                     , children = []}
+    in addChildren AMachine.DOM.init [bg, dialog, hello, world]

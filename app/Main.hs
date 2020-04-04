@@ -51,7 +51,7 @@ debug :: () -> IO ()
 debug () = do
   SDL.initialize [SDL.InitVideo]
   SDL.Font.initialize
-  window <- createWindow "VeNGE" SDL.defaultWindow
+  window <- createWindow "VeNGE" SDL.defaultWindow { windowInitialSize = V2 800 600 }
   renderer <- SDL.createRenderer window (-1) rdrConfig 
   let col = SDL.rendererDrawColor renderer
   col $= black
