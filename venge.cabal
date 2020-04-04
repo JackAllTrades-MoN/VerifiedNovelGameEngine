@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ac892b57c4f705366e3c95fa837f39064713fffa61abfc4f2f1b5c2fc0e6d29e
+-- hash: 29cd1361711f27740d33195236280c5c080fb329460dde6cb99b09609081f9c9
 
 name:           venge
 version:        0.1.0.0
@@ -27,7 +27,14 @@ source-repository head
 
 library
   exposed-modules:
+      AMachine
+      AMachine.DOM
+      AMachine.Memory
+      AMachine.Var
+      Error
       Lib
+      Monitor
+      VConfig
   other-modules:
       Paths_venge
   hs-source-dirs:
@@ -43,8 +50,6 @@ library
 executable venge-exe
   main-is: Main.hs
   other-modules:
-      Error
-      VConfig
       Paths_venge
   hs-source-dirs:
       app

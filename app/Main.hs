@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -15,29 +16,12 @@ import VConfig
 import Data.Text
 import Control.Monad
 
+import Monitor
+import AMachine
+
 red :: SDL.Font.Color
 red = SDL.V4 255 0 0 0
 black = SDL.V4 0 0 0 0
-
-{-
-printMsg :: SDL.Window -> SDL.Font.Color -> Int -> Text -> IO ()
-printMsg window color size msg = do
-  font <- SDL.Font.load "font/mplus-1p-regular.ttf" size
-  text <- SDL.Font.solid font color msg -- surface
-  SDL.Font.free font
-  txtr <- SDL.cr
-  screen <- SDL.getWindowSurface window
-  SDL.surfaceBlit text Nothing screen Nothing
-  SDL.freeSurface text
-  SDL.updateWindowSurface window -}
-
-printMsg :: SDL.Renderer -> SDL.Font.Color -> Int -> Text -> IO ()
-printMsg renderer color size msg = do
-  font <- SDL.Font.load "font/mplus-1p-regular.ttf" size
-  surface <- SDL.Font.solid font color msg
-  txtr <- SDL.createTextureFromSurface renderer surface
-  let rect = SDL.Rectangle (P $ V2 0 0) (V2 100 100)
-  SDL.copy renderer txtr Nothing (Just rect)
 
 buildOptions :: Parser Options
 buildOptions = pure $ Options Build
@@ -72,41 +56,25 @@ debug () = do
   let col = SDL.rendererDrawColor renderer
   col $= black
   SDL.showWindow window
-  appLoop renderer
+  appLoop renderer AMachine.test
   SDL.destroyRenderer renderer
   SDL.destroyWindow window
   SDL.Font.quit
   SDL.quit
 
-appLoop :: SDL.Renderer -> IO ()
-appLoop renderer = do
+appLoop :: SDL.Renderer -> AMachine.MachineState -> IO ()
+appLoop renderer st = do
   ev <- SDL.pollEvents
   let (Any quit, Sum ct) =
-        foldMap ((\e -> case e of
+        foldMap ((\case
           SDL.QuitEvent -> (Any True, Sum 0)
           KeyboardEvent kev 
             | keyboardEventKeyMotion kev == Pressed &&
               keysymKeycode (keyboardEventKeysym kev) == KeycodeQ
             -> (Any True, Sum 0) 
           _ -> (Any False, Sum 0)) . SDL.eventPayload) ev
-  SDL.clear renderer
-  printMsg renderer red 20 "hoge"
-  SDL.present renderer
-  unless quit $ appLoop renderer
-
-{-
-appLoop :: IO ()
-appLoop = waitEvent >>= go
-  where
-  go :: Event -> IO ()
-  go ev =
-    case eventPayload ev of
-      KeyboardEvent keyboardEvent
-        | keyboardEventKeyMotion keyboardEvent == Pressed &&
-          keysymKeycode (keyboardEventKeysym keyboardEvent) == KeycodeQ
-        -> return ()
-      _ -> waitEvent >>= go
--}
+  Monitor.printScreen renderer st
+  unless quit $ appLoop renderer st { isDOMUpdated = False }
 
 main :: IO ()
 main =
