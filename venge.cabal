@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f9b09e5200f6bdb5c11090d8a3cda4533a5ec13a52717fae66d89795e7925642
+-- hash: a1ad5210ae2ea0faa38bff688bbf63503ea268329023df2a57e3fc170586cc96
 
 name:           venge
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       AMachine.Memory
       AMachine.Var
       Error
+      Game
       Lib
       Monitor
       VConfig
@@ -77,6 +78,7 @@ test-suite venge-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Sample
       Paths_venge
   hs-source-dirs:
       test
