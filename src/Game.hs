@@ -18,7 +18,8 @@ data NovelGameSt = NovelGameSt
       , font     :: FilePath
       , dialog   :: Text
       , bgImg    :: FilePath
-      , isScreenUpdated :: Bool }
+      , isScreenUpdated :: Bool
+      , isIdling :: Bool }
     deriving Show
 
 newtype NovelGame a = NovelGame (StateT NovelGameSt (ExceptT String IO) a)
@@ -34,7 +35,8 @@ runGame_ ng renderer  = do
                  , font     = "font/mplus-1p-regular.ttf"
                  , dialog   = ""
                  , bgImg    = "test/img/bg.png"
-                 , isScreenUpdated = False }
+                 , isScreenUpdated = False
+                 , isIdling = False }
     result <- runGame ng initSt
     print result
 
@@ -45,6 +47,12 @@ handleEvent ev = do
     where
         aux :: SDL.EventPayload -> NovelGame ()
         aux (SDL.KeyboardEvent kev)
+         | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
+            SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
+                = do
+                    st <- get
+                    liftIO $ putStrLn "Press Q"
+                    put $ st { isIdling = False }
          | SDL.keyboardEventKeyMotion kev == SDL.Pressed
           = liftIO $ putStrLn $ "Press"
         aux (SDL.WindowClosedEvent wev) = throwError "Exit: code 0"
@@ -70,22 +78,25 @@ printScreen = do
          | not $ isScreenUpdated st = do
             liftIO $ SDL.clear (renderer st)
             st <- get
-            printMsg 0 0 20 "hoge"
+            printMsg 0 0 20 $ dialog st
             liftIO $ SDL.present (renderer st)
             put $ st { isScreenUpdated = True }
          | otherwise = return ()
 
 idle :: NovelGame ()
 idle = do
+    st <- get
+    put $ st { isIdling = True }
     evs <- SDL.pollEvents
     mapM_ handleEvent evs
     printScreen
-    idle
+    st <- get
+    when (isIdling st) idle
 
 updateMsg :: Text -> NovelGame ()
 updateMsg msg = do
     st <- get
-    put $ st { dialog = msg }
+    put $ st { dialog = msg, isScreenUpdated = False }
 
 loadBGImage :: FilePath -> NovelGame ()
 loadBGImage path = do
@@ -98,3 +109,4 @@ test = do
     updateMsg "これは1行目です"
     idle
     updateMsg "これは2行目です"
+    idle
