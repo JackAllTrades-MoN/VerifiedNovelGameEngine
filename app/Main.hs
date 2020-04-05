@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
+-- {-# LANGUAGE LambdaCase #-}
 
 module Main where
 
-import SDL
+import qualified SDL
 import SDL.Raw (renderCopy, Rect(..))
 import SDL.Font
 import SDL.Video
@@ -15,9 +15,13 @@ import Data.Semigroup ((<>), Any(..), Sum(..))
 import VConfig
 import Data.Text
 import Control.Monad
+import Control.Monad.State
+import qualified Data.List as List
+import qualified Data.Sequence as S
 
-import Monitor
-import AMachine
+import qualified Monitor
+import qualified AMachine as AM
+import qualified AMachine.Event as AME
 
 red :: SDL.Font.Color
 red = SDL.V4 255 0 0 0
@@ -51,30 +55,61 @@ debug :: () -> IO ()
 debug () = do
   SDL.initialize [SDL.InitVideo]
   SDL.Font.initialize
-  window <- createWindow "VeNGE" SDL.defaultWindow { windowInitialSize = V2 800 600 }
+  window <- createWindow "VeNGE" SDL.defaultWindow { windowInitialSize = SDL.V2 800 600 }
   renderer <- SDL.createRenderer window (-1) rdrConfig 
   let col = SDL.rendererDrawColor renderer
-  col $= black
+  col SDL.$= black
   SDL.showWindow window
-  appLoop renderer AMachine.test
+  execStateT (appLoop renderer) AM.test
   SDL.destroyRenderer renderer
   SDL.destroyWindow window
   SDL.Font.quit
   SDL.quit
 
-appLoop :: SDL.Renderer -> AMachine.MachineState -> IO ()
+ofMEvent :: SDL.EventPayload -> AME.Event
+ofMEvent (SDL.KeyboardEvent kev)
+          | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
+            SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
+          = AME.EKey "Q"
+ofMEvent _ = AME.EClose
+
+loadEvent :: SDL.Event-> StateT AM.MachineState IO ()
+loadEvent ev = do
+  st <- get
+  put $ AM.putEvent st $ (ofMEvent . SDL.eventPayload) ev
+
+tick :: StateT AM.MachineState IO ()
+tick = do
+  st <- get
+  put $ AM.tick st
+
+printScreen :: SDL.Renderer -> StateT AM.MachineState IO ()
+printScreen renderer = do
+  st <- get
+  lift $ Monitor.printScreen renderer st
+  put $ st { AM.isDOMUpdated = False }
+
+appLoop :: SDL.Renderer -> StateT AM.MachineState IO ()
+appLoop renderer = do
+  evs <- lift SDL.pollEvents
+  mapM_ loadEvent evs
+  tick
+  printScreen renderer
+  st <- get
+  lift $ print $ S.length $ AM.evqueue st
+  unless (AM.isShuttingDown st) $ appLoop renderer 
+{-
+appLoop :: SDL.Renderer -> AM.MachineState -> IO ()
 appLoop renderer st = do
-  ev <- SDL.pollEvents
-  let (Any quit, Sum ct) =
-        foldMap ((\case
-          SDL.QuitEvent -> (Any True, Sum 0)
-          KeyboardEvent kev 
-            | keyboardEventKeyMotion kev == Pressed &&
-              keysymKeycode (keyboardEventKeysym kev) == KeycodeQ
-            -> (Any True, Sum 0) 
-          _ -> (Any False, Sum 0)) . SDL.eventPayload) ev
-  Monitor.printScreen renderer st
-  unless quit $ appLoop renderer st { isDOMUpdated = False }
+  evs <- SDL.pollEvents
+  let st' = List.foldl (\st ev -> AM.putEvent st $ (ofMEvent . SDL.eventPayload) ev) st evs
+  let st'' = AM.tick st'
+  Monitor.printScreen renderer st''
+  print $ S.length $ AM.evqueue st''
+  unless (AM.isShuttingDown st'')
+   $ appLoop renderer st'' { AM.isDOMUpdated = False }
+--  unless quit $ appLoop renderer st' { AM.isDOMUpdated = False }
+-}
 
 main :: IO ()
 main =
