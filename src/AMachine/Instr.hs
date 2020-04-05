@@ -6,6 +6,8 @@ import GHC.Word (Word8)
 data Instr =
     IWait
     | IShutdown
+    | ILabel { name :: Text }
+    | IJumpToL { name :: Text }
     | IAddPicture { targetId :: Text
                   , domid    :: Text
                   , name     :: Text
