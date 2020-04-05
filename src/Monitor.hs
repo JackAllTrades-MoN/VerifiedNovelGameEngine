@@ -10,6 +10,7 @@ import SDL.Video.Renderer (surfaceDimensions)
 import Foreign.C.Types (CInt, CInt(..))
 import Unsafe.Coerce (unsafeCoerce)
 import SDL.Image
+import GHC.Word (Word8)
 
 import AMachine
 import AMachine.DOM as DOM
@@ -17,8 +18,8 @@ import AMachine.DOM as DOM
 red :: SDL.Font.Color
 red = SDL.V4 255 0 0 0
 
-toSDLColor :: DOM.V4 -> SDL.Font.Color
-toSDLColor (DOM.V4 r g b a) = SDL.V4 r g b a
+toSDLColor :: (Word8, Word8, Word8, Word8) -> SDL.Font.Color
+toSDLColor (r, g, b, a) = SDL.V4 r g b a
 
 defaultFont = "font/mplus-1p-regular.ttf"
 
@@ -42,14 +43,14 @@ printPicture renderer x y w h filePath = do
 
 printDOMTree :: SDL.Renderer -> DOM.DOMTree -> IO ()
 printDOMTree renderer dom @ DOM.DOMTree { element = EText {} } = do
-  let e = element dom
-      DOM.V2 x y = position e
+  let e      = element dom
+      (x, y) = position e
   printMsg renderer (toSDLColor $ color e) x y (fontSize e) (value e)
   mapM_ (printDOMTree renderer) $ children dom
 
 printDOMTree renderer dom @ DOM.DOMTree { element = EPicture {} } = do
-  let e = element dom
-      DOM.V2 x y = position e
+  let e      = element dom
+      (x, y) = position e
   printPicture renderer x y (w e) (h e) $ src e
 
 printDOMTree renderer dom =

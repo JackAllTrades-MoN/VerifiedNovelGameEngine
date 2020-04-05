@@ -1,0 +1,27 @@
+[ IAddPicture
+  { targetId = "root"
+  , domid    = "bg"
+  , name     = "bg"
+  , src      = "test/img/bg.png"
+  , position = Nothing
+  , w = Just 800
+  , h = Just 600 }
+, IAddPicture
+  { targetId = "root"
+  , domid    = "dialog"
+  , name     = "dialog"
+  , src      = "test/img/wafu2.png"
+  , position = Just (0, 400)
+  , w        = Just 800
+  , h        = Just 200 }
+, IWait
+, IAddText 
+  { targetId = "root"
+  , domid    = "hello"
+  , name     = "hello"
+  , value    = "hello"
+  , fontSize = Just 40
+  , color    = Just (255, 255, 255, 0)
+  , position = Just (40, 440) }
+, IWait
+, IShutdown ]

@@ -60,18 +60,12 @@ debug () = do
   let col = SDL.rendererDrawColor renderer
   col SDL.$= black
   SDL.showWindow window
-  execStateT (appLoop renderer) AM.test
+  st <- AM.loadInstr "test/insts.txt" AM.init
+  execStateT (appLoop renderer) st
   SDL.destroyRenderer renderer
   SDL.destroyWindow window
   SDL.Font.quit
   SDL.quit
-
-ofMEvent :: SDL.EventPayload -> AME.Event
-ofMEvent (SDL.KeyboardEvent kev)
-          | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
-            SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
-          = AME.EKey "Q"
-ofMEvent _ = AME.EClose
 
 loadEvent :: SDL.Event-> StateT AM.MachineState IO ()
 loadEvent ev = do
@@ -81,6 +75,8 @@ loadEvent ev = do
      | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
       SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
       -> put $ AM.putEvent st $ AME.EKey "Q"
+    SDL.WindowClosedEvent wev
+      -> put $ AM.putEvent st AME.EClose
     _ -> return ()
 
 tick :: StateT AM.MachineState IO ()
@@ -101,7 +97,7 @@ appLoop renderer = do
   tick
   printScreen renderer
   st <- get
-  lift $ print $ S.length $ AM.evqueue st
+--  lift $ print $ S.length $ AM.evqueue st
   unless (AM.isShuttingDown st) $ appLoop renderer 
 
 main :: IO ()

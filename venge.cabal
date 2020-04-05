@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 18ca9cf6d3a05c71373c077d617dc457420f3833e471906884f62039b342b7d8
+-- hash: f9b09e5200f6bdb5c11090d8a3cda4533a5ec13a52717fae66d89795e7925642
 
 name:           venge
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       AMachine
       AMachine.DOM
       AMachine.Event
+      AMachine.Instr
       AMachine.Memory
       AMachine.Var
       Error
