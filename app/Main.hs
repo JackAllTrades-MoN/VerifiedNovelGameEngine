@@ -76,7 +76,12 @@ ofMEvent _ = AME.EClose
 loadEvent :: SDL.Event-> StateT AM.MachineState IO ()
 loadEvent ev = do
   st <- get
-  put $ AM.putEvent st $ (ofMEvent . SDL.eventPayload) ev
+  case SDL.eventPayload ev of
+    SDL.KeyboardEvent kev
+     | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
+      SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
+      -> put $ AM.putEvent st $ AME.EKey "Q"
+    _ -> return ()
 
 tick :: StateT AM.MachineState IO ()
 tick = do
@@ -98,18 +103,6 @@ appLoop renderer = do
   st <- get
   lift $ print $ S.length $ AM.evqueue st
   unless (AM.isShuttingDown st) $ appLoop renderer 
-{-
-appLoop :: SDL.Renderer -> AM.MachineState -> IO ()
-appLoop renderer st = do
-  evs <- SDL.pollEvents
-  let st' = List.foldl (\st ev -> AM.putEvent st $ (ofMEvent . SDL.eventPayload) ev) st evs
-  let st'' = AM.tick st'
-  Monitor.printScreen renderer st''
-  print $ S.length $ AM.evqueue st''
-  unless (AM.isShuttingDown st'')
-   $ appLoop renderer st'' { AM.isDOMUpdated = False }
---  unless quit $ appLoop renderer st' { AM.isDOMUpdated = False }
--}
 
 main :: IO ()
 main =
