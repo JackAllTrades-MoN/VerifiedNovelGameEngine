@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a1ad5210ae2ea0faa38bff688bbf63503ea268329023df2a57e3fc170586cc96
+-- hash: 0968da5f5582a283ec8f61a02318bf5ee47bc2a2abf38fbd6c882d79cf1941ff
 
 name:           venge
 version:        0.1.0.0
@@ -33,10 +33,15 @@ library
       AMachine.Instr
       AMachine.Memory
       AMachine.Var
+      Component
+      Component.NovelBody
+      Component.NovelTitle
       Error
       Game
       Lib
       Monitor
+      NovelGame.Title
+      Sample
       VConfig
   other-modules:
       Paths_venge

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
+-- {-# LANGUAGE LambdaCase #-}
 
 module Game where
 
@@ -37,6 +37,13 @@ data Component = Component
                     , isVisible :: Bool
                     , eventHandler :: [EventHandler] }
     deriving Show
+
+unitComponent :: Text -> Component
+unitComponent cid = Component {
+    cid = cid, src = Nothing, txt = Nothing, font = Nothing,
+    color = Nothing, position = Nothing, size = Nothing,
+    padding = Nothing, depth = Nothing, isVisible = True,
+    eventHandler = [] }
 
 data NovelGameSt = NovelGameSt
       { renderer        :: SDL.Renderer
@@ -221,6 +228,11 @@ pressEvent keycode action =
              SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == keycode = action
         aux _ = return ()
 
+loadComponents :: [Component] -> NovelGame ()
+loadComponents comps = do
+    st <- get
+    put $ st { components = comps }
+
 testComponent :: NovelGame ()
 testComponent = do
     let a = get >>= \st ->
@@ -273,22 +285,3 @@ testComponent = do
                                 , eventHandler = []}]
     st <- get
     put st { components = components }
-
-test :: NovelGame ()
-test = do
-    testComponent
-    updateTxt "textarea" "これは1行目です"
-    idle
-    updateTxt "textarea" "これは2行目です"
-    idle
-    test2
-
-test2 = do
-    updateTxt "textarea" "ここはシーン2です"
-    idle
-    enableOption "option1" "最初の選択肢" test3
-    idle
-
-test3 = do
-    updateTxt "textarea" "選択肢で遷移しました"
-    idle

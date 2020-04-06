@@ -23,6 +23,7 @@ import qualified Monitor
 import qualified AMachine as AM
 import qualified AMachine.Event as AME
 import qualified Game
+import qualified Sample
 
 red :: SDL.Font.Color
 red = SDL.V4 255 0 0 0
@@ -52,23 +53,6 @@ build _ = putStrLn "BUIIIILD"
 
 rdrConfig = SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedRenderer }
 
-{-
-debug :: () -> IO ()
-debug () = do
-  SDL.initialize [SDL.InitVideo]
-  SDL.Font.initialize
-  window <- createWindow "VeNGE" SDL.defaultWindow { windowInitialSize = SDL.V2 800 600 }
-  renderer <- SDL.createRenderer window (-1) rdrConfig 
-  let col = SDL.rendererDrawColor renderer
-  col SDL.$= black
-  SDL.showWindow window
-  st <- AM.loadInstr "test/insts.txt" AM.init
-  execStateT (appLoop renderer) st
-  SDL.destroyRenderer renderer
-  SDL.destroyWindow window
-  SDL.Font.quit
-  SDL.quit -}
-
 debug :: () -> IO ()
 debug () = do
   SDL.initialize [SDL.InitVideo]
@@ -78,7 +62,7 @@ debug () = do
   let col = SDL.rendererDrawColor renderer
   col SDL.$= black
   SDL.showWindow window
-  Game.runGame_ Game.test renderer
+  Game.runGame_ Sample.title renderer
   SDL.destroyRenderer renderer
   SDL.destroyWindow window
   SDL.Font.quit
