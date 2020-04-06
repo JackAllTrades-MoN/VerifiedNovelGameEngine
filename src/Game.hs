@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Game where
 
@@ -7,6 +8,7 @@ import qualified SDL
 import qualified SDL.Font
 import qualified SDL.Image
 import qualified SDL.Video.Renderer
+import qualified SDL.Input.Mouse
 import GHC.Word (Word8)
 import Data.Text (Text)
 import Control.Monad.Except
@@ -18,7 +20,7 @@ import qualified Data.Maybe as Maybe
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Monoid ((<>))
 
-newtype EventHandler = EventHandler (SDL.Event -> NovelGame ())
+newtype EventHandler = EventHandler (SDL.EventPayload -> NovelGame ())
 instance Show EventHandler where
     show (EventHandler eh) = "<EventHandler>"
 
@@ -32,21 +34,21 @@ data Component = Component
                     , size      :: Maybe (Int, Int)
                     , padding   :: Maybe (Int, Int)
                     , depth     :: Maybe Int
-                    , isVisible :: Bool }
+                    , isVisible :: Bool
+                    , eventHandler :: [EventHandler] }
     deriving Show
 
 data NovelGameSt = NovelGameSt
       { renderer        :: SDL.Renderer
       , isScreenUpdated :: Bool
       , isIdling   :: Bool
-      , components :: [Component] 
-      , evListener :: [EventHandler] }
+      , components :: [Component] }
     deriving Show
 
-newtype NovelGame a = NovelGame (StateT NovelGameSt (ExceptT String IO) a)
-  deriving (Functor, Applicative, Monad, MonadState NovelGameSt, MonadError String, MonadIO)
+newtype NovelGame a = NovelGame (StateT NovelGameSt (ExceptT Text IO) a)
+  deriving (Functor, Applicative, Monad, MonadState NovelGameSt, MonadError Text, MonadIO)
 
-runGame :: NovelGame () -> NovelGameSt -> IO (Either String ((), NovelGameSt))
+runGame :: NovelGame () -> NovelGameSt -> IO (Either Text ((), NovelGameSt))
 runGame (NovelGame ng) initSt = runExceptT (runStateT ng initSt)
 
 runGame_ :: NovelGame () -> SDL.Renderer -> IO ()
@@ -55,26 +57,18 @@ runGame_ ng renderer  = do
                  { renderer        = renderer
                  , isScreenUpdated = False
                  , isIdling        = False
-                 , components      = []
-                 , evListener      = [] }
+                 , components      = [] }
     result <- runGame ng initSt
     print result
 
 handleEvent :: SDL.Event -> NovelGame ()
 handleEvent ev = do
     st <- get
-    aux $ SDL.eventPayload ev
+    let evp = SDL.eventPayload ev
+    aux evp
+    mapM_ ((mapM_ (\(EventHandler eh) -> eh evp)) . eventHandler) $ components st
     where
         aux :: SDL.EventPayload -> NovelGame ()
-        aux (SDL.KeyboardEvent kev)
-         | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
-            SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
-                = do
-                    st <- get
-                    liftIO $ putStrLn "Press Q"
-                    put $ st { isIdling = False }
-         | SDL.keyboardEventKeyMotion kev == SDL.Pressed
-          = liftIO $ putStrLn $ "Press"
         aux (SDL.WindowClosedEvent wev) = throwError "Exit: code 0"
         aux _ = return ()
 
@@ -134,38 +128,105 @@ idle = do
     st <- get
     when (isIdling st) idle
 
-updateTxt :: Text -> Text -> NovelGame ()
-updateTxt cid' msg = do
+updateComponent :: Text -> (Component -> Component) -> NovelGame ()
+updateComponent cid' updater = do
     st <- get
     put $ st { isScreenUpdated = False
-             , components = List.map updater (components st) }
+             , components = List.map updater (components st)}
+
+updateTxt :: Text -> Text -> NovelGame ()
+updateTxt cid' msg =
+    updateComponent cid' updater
     where
         updater c
          | cid c == cid' = c { txt = Just msg }
          | otherwise = c
 
 updateSrc :: Text -> FilePath -> NovelGame ()
-updateSrc cid' src' = do
-    st <- get
-    put $ st { isScreenUpdated = False
-             , components = List.map updater (components st) }
+updateSrc cid' src' =
+    updateComponent cid' updater
     where
         updater c
          | cid c == cid' = c { src = Just src' }
          | otherwise = c
 
-enableOption :: Text -> Text -> NovelGame ()
-enableOption cid' msg = do
-    st <- get
-    put $ st { isScreenUpdated = False
-             , components = List.map updater (components st) }
+updateVisibility :: Text -> Bool -> NovelGame ()
+updateVisibility cid' isVisible =
+    updateComponent cid' updater
     where
         updater c
-            | cid c == cid' = c { txt = Just msg, isVisible = True }
+            | cid c == cid' = c { isVisible = isVisible }
             | otherwise = c 
+
+getDim :: Text -> NovelGame (Int, Int, Int, Int)
+getDim cid' = do
+    st <- get
+    case List.find (\c -> cid c == cid') $ components st of
+         Nothing -> throwError $ "Unknown ID: " <> cid'
+         Just c ->
+          let (x, y) = Maybe.fromMaybe (0, 0) $ position c
+              (w, h) = Maybe.fromMaybe (800, 600) $ size c
+          in return (x, y, w, h)
+
+addEvent :: Text -> EventHandler -> NovelGame ()
+addEvent cid' ev =
+    updateComponent cid' updater
+    where
+        updater c
+            | cid c == cid' = c { eventHandler = ev : eventHandler c }
+            | otherwise = c
+
+enableOption :: Text -> Text -> NovelGame () -> NovelGame ()
+enableOption cid' msg action = do
+    (x, y, w, h) <- getDim cid'
+    addEvent cid' $
+     clickEvent SDL.Input.Mouse.ButtonLeft (x, y, w, h) action'
+    updateTxt cid' msg
+    updateVisibility cid' True
+    where action' = do
+                    clearEvent cid'
+                    updateVisibility cid' False
+                    action
+
+clearEvent :: Text -> NovelGame ()
+clearEvent cid' =
+    updateComponent cid' updater
+    where
+        updater c
+         | cid c == cid' = c { eventHandler = [] }
+         | otherwise = c
+
+clickEvent :: SDL.Input.Mouse.MouseButton -> (Int, Int, Int, Int) -> NovelGame () -> EventHandler
+clickEvent buttonType range action =
+    EventHandler aux
+    where
+        aux (SDL.MouseButtonEvent mbev)
+            | SDL.mouseButtonEventButton mbev == buttonType &&
+              inRange range (SDL.mouseButtonEventPos mbev) = action
+            | otherwise = return ()
+        aux _ = return ()
+        inRange (x, y, w, h) (SDL.P (SDL.V2 px py))
+         = let (x', y', w', h') = ( unsafeCoerce x
+                                  , unsafeCoerce y
+                                  , unsafeCoerce w
+                                  , unsafeCoerce h)
+           in x' < px && y' < py && px < x' + w' && py < y' + h'
+
+pressEvent :: SDL.Keycode -> NovelGame () -> EventHandler
+pressEvent keycode action =
+    EventHandler aux
+    where 
+        aux (SDL.KeyboardEvent kev)
+            | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
+             SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == keycode = action
+        aux _ = return ()
 
 testComponent :: NovelGame ()
 testComponent = do
+    let a = get >>= \st ->
+            put (st { isIdling = False }) >>= \() ->
+            liftIO $ putStrLn "Press Space"
+    let ev = pressEvent SDL.KeycodeSpace a
     let components = [Component { cid  = "bg"
                                 , src = Just "test/img/bg.png"
                                 , txt = Nothing
@@ -175,7 +236,8 @@ testComponent = do
                                 , size = Nothing
                                 , padding = Nothing
                                 , depth = Nothing
-                                , isVisible = True },
+                                , isVisible = True
+                                , eventHandler = [ev] },
                       Component { cid  = "dialog"
                                 , src = Just "test/img/wafu2.png"
                                 , txt = Nothing
@@ -185,7 +247,8 @@ testComponent = do
                                 , size = Just (800, 200)
                                 , padding = Nothing
                                 , depth = Nothing
-                                , isVisible = True },
+                                , isVisible = True
+                                , eventHandler = [] },
                       Component { cid  = "textarea"
                                 , src = Nothing
                                 , txt = Just "Dummy Text"
@@ -195,7 +258,8 @@ testComponent = do
                                 , size = Nothing
                                 , padding = Nothing
                                 , depth = Nothing
-                                , isVisible = True },
+                                , isVisible = True
+                                , eventHandler = [] },
                       Component { cid = "option1"
                                 , src = Just "test/img/option.png"
                                 , txt = Just "option1"
@@ -205,7 +269,8 @@ testComponent = do
                                 , size = Just (220, 62)
                                 , padding = Just (50, 15)
                                 , depth = Nothing
-                                , isVisible = False}]
+                                , isVisible = False
+                                , eventHandler = []}]
     st <- get
     put st { components = components }
 
@@ -221,5 +286,9 @@ test = do
 test2 = do
     updateTxt "textarea" "ここはシーン2です"
     idle
-    enableOption "option1" "最初の選択肢"
+    enableOption "option1" "最初の選択肢" test3
+    idle
+
+test3 = do
+    updateTxt "textarea" "選択肢で遷移しました"
     idle
