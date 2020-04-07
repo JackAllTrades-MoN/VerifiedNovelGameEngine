@@ -68,39 +68,6 @@ debug () = do
   SDL.Font.quit
   SDL.quit
 
-loadEvent :: SDL.Event-> StateT AM.MachineState IO ()
-loadEvent ev = do
-  st <- get
-  case SDL.eventPayload ev of
-    SDL.KeyboardEvent kev
-     | SDL.keyboardEventKeyMotion kev == SDL.Pressed &&
-      SDL.keysymKeycode (SDL.keyboardEventKeysym kev) == SDL.KeycodeQ
-      -> put $ AM.putEvent st $ AME.EKey "Q"
-    SDL.WindowClosedEvent wev
-      -> put $ AM.putEvent st AME.EClose
-    _ -> return ()
-
-tick :: StateT AM.MachineState IO ()
-tick = do
-  st <- get
-  put $ AM.tick st
-
-printScreen :: SDL.Renderer -> StateT AM.MachineState IO ()
-printScreen renderer = do
-  st <- get
-  lift $ Monitor.printScreen renderer st
-  put $ st { AM.isDOMUpdated = False }
-
-appLoop :: SDL.Renderer -> StateT AM.MachineState IO ()
-appLoop renderer = do
-  evs <- lift SDL.pollEvents
-  mapM_ loadEvent evs
-  tick
-  printScreen renderer
-  st <- get
---  lift $ print $ S.length $ AM.evqueue st
-  unless (AM.isShuttingDown st) $ appLoop renderer 
-
 main :: IO ()
 main =
   execParser opts >>= \opts ->

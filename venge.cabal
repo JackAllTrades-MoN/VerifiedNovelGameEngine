@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0968da5f5582a283ec8f61a02318bf5ee47bc2a2abf38fbd6c882d79cf1941ff
+-- hash: a6bdd7b087747c69bcf2eddfa515e35e89b8a1cf2978f9191e03168e7cb175bd
 
 name:           venge
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Component.NovelBody
       Component.NovelTitle
       Error
+      Event
       Game
       Lib
       Monitor

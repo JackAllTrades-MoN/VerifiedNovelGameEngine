@@ -77,6 +77,7 @@ handleEvent ev = do
     where
         aux :: SDL.EventPayload -> NovelGame ()
         aux (SDL.WindowClosedEvent wev) = throwError "Exit: code 0"
+        aux (SDL.MouseButtonEvent mev) = liftIO $ print $ SDL.mouseButtonEventClicks mev 
         aux _ = return ()
 
 printMsg :: SDL.Font.Color -> FilePath -> Int -> Int -> Int -> Text -> NovelGame ()
@@ -209,6 +210,7 @@ clickEvent buttonType range action =
     where
         aux (SDL.MouseButtonEvent mbev)
             | SDL.mouseButtonEventButton mbev == buttonType &&
+              SDL.mouseButtonEventMotion mbev == SDL.Released && {- TODO: fix -}
               inRange range (SDL.mouseButtonEventPos mbev) = action
             | otherwise = return ()
         aux _ = return ()
@@ -232,56 +234,3 @@ loadComponents :: [Component] -> NovelGame ()
 loadComponents comps = do
     st <- get
     put $ st { components = comps }
-
-testComponent :: NovelGame ()
-testComponent = do
-    let a = get >>= \st ->
-            put (st { isIdling = False }) >>= \() ->
-            liftIO $ putStrLn "Press Space"
-    let ev = pressEvent SDL.KeycodeSpace a
-    let components = [Component { cid  = "bg"
-                                , src = Just "test/img/bg.png"
-                                , txt = Nothing
-                                , font = Nothing
-                                , color = Nothing
-                                , position = Nothing
-                                , size = Nothing
-                                , padding = Nothing
-                                , depth = Nothing
-                                , isVisible = True
-                                , eventHandler = [ev] },
-                      Component { cid  = "dialog"
-                                , src = Just "test/img/wafu2.png"
-                                , txt = Nothing
-                                , font = Nothing
-                                , color = Nothing
-                                , position = Just (0, 400)
-                                , size = Just (800, 200)
-                                , padding = Nothing
-                                , depth = Nothing
-                                , isVisible = True
-                                , eventHandler = [] },
-                      Component { cid  = "textarea"
-                                , src = Nothing
-                                , txt = Just "Dummy Text"
-                                , font = Just "font/mplus-1p-regular.ttf"
-                                , color = Just (255, 0, 0, 0)
-                                , position = Just (40, 440)
-                                , size = Nothing
-                                , padding = Nothing
-                                , depth = Nothing
-                                , isVisible = True
-                                , eventHandler = [] },
-                      Component { cid = "option1"
-                                , src = Just "test/img/option.png"
-                                , txt = Just "option1"
-                                , font = Just "font/mplus-1p-regular.ttf"
-                                , color = Just (255, 255, 255, 0)
-                                , position = Just (290, 150)
-                                , size = Just (220, 62)
-                                , padding = Just (50, 15)
-                                , depth = Nothing
-                                , isVisible = False
-                                , eventHandler = []}]
-    st <- get
-    put st { components = components }

@@ -39,4 +39,5 @@ simple = [ (unitComponent "bgimg") { eventHandler = [spPageNext] }
             , color = Just (255, 255, 255, 0)
             , position = Just (290, 150)
             , size = Just (220, 62)
-            , padding = Just (50, 15) }]
+            , padding = Just (50, 15)
+            , isVisible = False }]
