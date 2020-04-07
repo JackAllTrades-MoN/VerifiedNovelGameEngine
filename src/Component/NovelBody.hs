@@ -6,6 +6,7 @@ import Game
 import qualified SDL
 import qualified SDL.Input.Mouse
 
+import Data.Text (Text)
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.IO.Class (liftIO)
@@ -20,6 +21,14 @@ spPageNext = pressEvent SDL.KeycodeSpace goNext
 
 clickPageNext :: EventHandler
 clickPageNext = clickEvent SDL.Input.Mouse.ButtonLeft (0, 400, 800, 200) goNext
+
+changeButton :: Text -> NovelGame ()
+changeButton cid' =
+   updateSrc cid' "test/img/option2.png"
+
+returnButton :: Text -> NovelGame ()
+returnButton cid' =
+   updateSrc cid' "test/img/option.png"
 
 simple :: [Component]
 simple = [ (unitComponent "bgimg") { eventHandler = [spPageNext] }

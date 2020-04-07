@@ -5,9 +5,23 @@ import Game
 import qualified SDL
 import qualified SDL.Input.Mouse
 
+import Data.Text (Text)
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.IO.Class (liftIO)
+
+changeButton :: Text -> NovelGame ()
+changeButton cid' =
+   updateSrc cid' "test/img/option2.png"
+
+returnButton :: Text -> NovelGame ()
+returnButton cid' =
+   updateSrc cid' "test/img/option.png"
+
+optionEv :: Text -> [EventHandler]
+optionEv cid' = [ mouseInEvent cid' $ changeButton cid'
+                , mouseOutEvent cid' $ returnButton cid'
+                , mouseOnEvent cid' $ changeButton cid']
 
 simple :: [Component]
 simple = [ unitComponent "title_bg"
@@ -22,7 +36,8 @@ simple = [ unitComponent "title_bg"
             , position = Just (290, 400)
             , size = Just (220, 62)
             , padding = Just (50, 15)
-            , isVisible = False }
+            , isVisible = False
+            , eventHandler = optionEv "option1" }
          , (unitComponent "option2")
             { src = Just "test/img/option.png"
             , txt = Nothing
@@ -31,4 +46,5 @@ simple = [ unitComponent "title_bg"
             , position = Just (290, 450)
             , size = Just (220, 62)
             , padding = Just (50, 15)
-            , isVisible = False }]
+            , isVisible = False
+            , eventHandler = optionEv "option2" }]

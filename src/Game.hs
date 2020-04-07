@@ -17,6 +17,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 
+
 import Unsafe.Coerce (unsafeCoerce)
 import Data.Monoid ((<>))
 
@@ -78,6 +79,9 @@ handleEvent ev = do
         aux :: SDL.EventPayload -> NovelGame ()
         aux (SDL.WindowClosedEvent wev) = throwError "Exit: code 0"
         aux (SDL.MouseButtonEvent mev) = liftIO $ print $ SDL.mouseButtonEventClicks mev 
+        aux (SDL.MouseMotionEvent mmev) = do
+            liftIO $ print $ SDL.mouseMotionEventPos mmev
+            liftIO $ print $ SDL.mouseMotionEventRelMotion mmev
         aux _ = return ()
 
 printMsg :: SDL.Font.Color -> FilePath -> Int -> Int -> Int -> Text -> NovelGame ()
@@ -234,3 +238,58 @@ loadComponents :: [Component] -> NovelGame ()
 loadComponents comps = do
     st <- get
     put $ st { components = comps }
+
+
+mouseInEvent :: Text -> NovelGame () -> EventHandler
+mouseInEvent cid' action =
+    EventHandler aux
+    where
+        aux (SDL.MouseMotionEvent mmev) = do
+            (x, y, w, h) <- getDim cid'
+            let SDL.P (SDL.V2 mx my) = SDL.mouseMotionEventPos mmev
+                SDL.V2 vx vy = SDL.mouseMotionEventRelMotion mmev
+            let (mx', my', vx', vy') = (unsafeCoerce mx :: Int,
+                                        unsafeCoerce my :: Int,
+                                        unsafeCoerce vx :: Int,
+                                        unsafeCoerce vy :: Int)
+                condition = not (x < mx' && mx' < x + w && y < my' && my' < y + h) &&
+                            (x < mx' + vx' && mx' + vx' < x + w &&
+                             y < my' + vy' && my' + vy' < y + h)
+            when condition action
+        aux _ = return ()
+
+mouseOutEvent :: Text -> NovelGame () -> EventHandler
+mouseOutEvent cid' action =
+    EventHandler aux
+    where
+        aux (SDL.MouseMotionEvent mmev) = do
+            (x, y, w, h) <- getDim cid'
+            let SDL.P (SDL.V2 mx my) = SDL.mouseMotionEventPos mmev
+                SDL.V2 vx vy = SDL.mouseMotionEventRelMotion mmev
+            let (mx', my', vx', vy') = (unsafeCoerce mx :: Int,
+                                        unsafeCoerce my :: Int,
+                                        unsafeCoerce vx :: Int,
+                                        unsafeCoerce vy :: Int)
+                condition = (x < mx' && mx' < x + w && y < my' && my' < y + h) &&
+                            not (x < mx' + vx' && mx' + vx' < x + w &&
+                             y < my' + vy' && my' + vy' < y + h)
+            when condition action
+        aux _ = return ()
+
+mouseOnEvent :: Text -> NovelGame () -> EventHandler
+mouseOnEvent cid' action =
+    EventHandler aux
+    where
+        aux (SDL.MouseMotionEvent mmev) = do
+            (x, y, w, h) <- getDim cid'
+            let SDL.P (SDL.V2 mx my) = SDL.mouseMotionEventPos mmev
+                SDL.V2 vx vy = SDL.mouseMotionEventRelMotion mmev
+            let (mx', my', vx', vy') = (unsafeCoerce mx :: Int,
+                                        unsafeCoerce my :: Int,
+                                        unsafeCoerce vx :: Int,
+                                        unsafeCoerce vy :: Int)
+                condition = (x < mx' && mx' < x + w && y < my' && my' < y + h) &&
+                            (x < mx' + vx' && mx' + vx' < x + w &&
+                             y < my' + vy' && my' + vy' < y + h)
+            when condition action
+        aux _ = return ()
