@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 61828e9c8cfbb6321a071db0f8ae4fd713d16adf37d5741c93cb64760c884a1f
+-- hash: c01e35c908c2328cd6b4a0163e6de84b01cd6fd88ff1839784f6d2040b4f5369
 
 name:           venge
 version:        0.1.0.0
@@ -42,7 +42,9 @@ library
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , file-embed
     , mtl
     , optparse-applicative
     , process
@@ -62,7 +64,9 @@ executable venge-exe
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , file-embed
     , mtl
     , optparse-applicative
     , process
@@ -85,7 +89,9 @@ test-suite venge-test
   build-depends:
       array
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , file-embed
     , mtl
     , optparse-applicative
     , process

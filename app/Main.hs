@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 -- {-# LANGUAGE LambdaCase #-}
 
 module Main where
@@ -17,6 +18,9 @@ import Control.Monad.State
 import qualified Data.List as List
 import qualified Data.Sequence as S
 import qualified System.Process as Process
+
+import Data.FileEmbed (embedFile, makeRelativeToProject)
+import qualified Data.ByteString as BS
 
 import qualified Game
 import qualified Sample
@@ -49,14 +53,15 @@ sample () = do
   SDL.Font.quit
   SDL.quit
 
+stubMain :: BS.ByteString
+stubMain = $(makeRelativeToProject "resources/StubMain.hs" >>= embedFile)
+
 new :: Text -> IO ()
 new projectName = do
   let dir = "projects/" <> projectName
   Process.system $ unpack $ "mkdir " <> dir
-  Process.system $ unpack $ "mkdir " <> dir <> "/src"
-  Process.system $ unpack $ "mkdir " <> dir <> "/build"
-  Process.system $ unpack $ "mkdir " <> dir <> "/img"
-  Process.system $ unpack $ "mkdir " <> dir <> "/font"
+  Process.system $ unpack $ "cd " <> dir <> "; mkdir src build img font"
+  BS.writeFile (unpack $ dir <> "/src/Main.hs") stubMain
   putStrLn "DONE"
 
 main :: IO ()

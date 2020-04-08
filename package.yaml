@@ -30,6 +30,8 @@ dependencies:
 - array
 - mtl
 - process
+- file-embed
+- bytestring 
 
 library:
   source-dirs: src
