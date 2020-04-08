@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a6bdd7b087747c69bcf2eddfa515e35e89b8a1cf2978f9191e03168e7cb175bd
+-- hash: 61828e9c8cfbb6321a071db0f8ae4fd713d16adf37d5741c93cb64760c884a1f
 
 name:           venge
 version:        0.1.0.0
@@ -27,21 +27,12 @@ source-repository head
 
 library
   exposed-modules:
-      AMachine
-      AMachine.DOM
-      AMachine.Event
-      AMachine.Instr
-      AMachine.Memory
-      AMachine.Var
       Component
       Component.NovelBody
       Component.NovelTitle
       Error
       Event
       Game
-      Lib
-      Monitor
-      NovelGame.Title
       Sample
       VConfig
   other-modules:
@@ -54,6 +45,7 @@ library
     , containers
     , mtl
     , optparse-applicative
+    , process
     , sdl2
     , sdl2-image
     , sdl2-ttf
@@ -73,6 +65,7 @@ executable venge-exe
     , containers
     , mtl
     , optparse-applicative
+    , process
     , sdl2
     , sdl2-image
     , sdl2-ttf
@@ -95,6 +88,7 @@ test-suite venge-test
     , containers
     , mtl
     , optparse-applicative
+    , process
     , sdl2
     , sdl2-image
     , sdl2-ttf
