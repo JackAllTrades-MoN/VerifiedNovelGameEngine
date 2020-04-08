@@ -56,12 +56,16 @@ sample () = do
 stubMain :: BS.ByteString
 stubMain = $(makeRelativeToProject "resources/StubMain.hs" >>= embedFile)
 
+autoGenReadMe :: BS.ByteString
+autoGenReadMe = $(makeRelativeToProject "resources/readme.txt" >>= embedFile)
+
 new :: Text -> IO ()
 new projectName = do
   let dir = "projects/" <> projectName
   Process.system $ unpack $ "mkdir " <> dir
-  Process.system $ unpack $ "cd " <> dir <> "; mkdir src build img font"
+  Process.system $ unpack $ "cd " <> dir <> "; mkdir src build img font bin"
   BS.writeFile (unpack $ dir <> "/src/Main.hs") stubMain
+  BS.writeFile (unpack $ dir <> "/readme.txt") autoGenReadMe
   putStrLn "DONE"
 
 main :: IO ()
