@@ -31,7 +31,8 @@ dependencies:
 - mtl
 - process
 - file-embed
-- bytestring 
+- bytestring
+- parsec
 
 library:
   source-dirs: src

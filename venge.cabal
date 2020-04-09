@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c01e35c908c2328cd6b4a0163e6de84b01cd6fd88ff1839784f6d2040b4f5369
+-- hash: 778620147a1b507835156188849c391ac0f05b1d4671dc408920c2e2a9046e6c
 
 name:           venge
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Event
       Game
       Sample
+      ScriptParser
       VConfig
   other-modules:
       Paths_venge
@@ -47,6 +48,7 @@ library
     , file-embed
     , mtl
     , optparse-applicative
+    , parsec
     , process
     , sdl2
     , sdl2-image
@@ -69,6 +71,7 @@ executable venge-exe
     , file-embed
     , mtl
     , optparse-applicative
+    , parsec
     , process
     , sdl2
     , sdl2-image
@@ -94,6 +97,7 @@ test-suite venge-test
     , file-embed
     , mtl
     , optparse-applicative
+    , parsec
     , process
     , sdl2
     , sdl2-image
