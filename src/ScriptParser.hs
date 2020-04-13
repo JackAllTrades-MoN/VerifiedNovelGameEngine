@@ -14,7 +14,7 @@ import qualified Text.Parsec.Pos as TP
 import qualified Data.List as List
 
 data Stmt = UpdateDialog Text
-          | UpdateSentence Text
+          | UpdateSentence Text Text
           | Command Text  
           | Comment Text 
     deriving Show
@@ -83,13 +83,11 @@ rawText = token (show . fst) snd ptkParse
         ptkParse _ = Nothing
 
 updateDialog :: Parsec [PTk] () Stmt
-updateDialog = UpdateDialog <$>
-                token ptkShow ptkPos ptkParse
-    where
-        ptkShow = show . fst
-        ptkPos = snd
-        ptkParse (RAWSTR txt,_) = Just txt
-        ptkParse _ = Nothing
+updateDialog = UpdateDialog <$> rawText
+
+updateSentence :: Parsec [PTk] () Stmt
+updateSentence =
+    (UpdateSentence <$> (rawText <* (tksym COLON))) <*> rawText
 
 tokenToText :: PTk -> Text
 tokenToText (BR, _) = "\n"
@@ -107,37 +105,17 @@ comment = Comment . (List.foldl (\acc a -> acc <> (tokenToText a)) "")
             <$> (tksym LStar
                         *> (manyTill anyToken (try $ tksym RStar)))
 
-{-
-updateDialog = token ptkShow ptkPos ptkParse
-    where
-        ptkShow = show . fst
-        ptkPos = snd
-        ptkParse (RAWSTR txt,_) = (Just . UpdateDialog) txt
-        ptkParse _ = Nothing -}
-{-
-updateDialog :: Parser Stmt
---updateDialog = UpdateDialog . pack <$>
---                 many1 (noneOf "[]")
-updateDialog = UpdateDialog . pack <$>
-                   many1 (do{ anyChar;
-                              notFollowedBy $ string "["})
---                   manyTill anyChar (try $ string "[")
+lineStmt :: Parsec [PTk] () Stmt
+lineStmt = try comment <|> try updateSentence <|> updateDialog
 
-comment :: Parser Stmt
-comment = Comment . pack <$> do{ string "(*";
-              manyTill anyChar (try $ string "*)")}
+stmtParse :: Text -> Either Text.Parsec.Error.ParseError [Stmt]
+stmtParse txt = do
+    tks <- lexer txt
+    parse stmt "hoge.txt" tks
+        where stmt = lineStmt `sepBy` (tksym BRBR)
 
-lineStmt :: Parser Stmt
-lineStmt = comment <|> updateDialog
-
-script :: Parser [Stmt]
-script = lineStmt `sepBy` string "[:br]" <* eof
-
-lexer :: Text -> Either Text.Parsec.Error.ParseError [Stmt]
-lexer str = parse script "" $
-                replace "\n\n" "[:br]" str -}
 test :: IO ()
 test = do
     testScript <- TIO.readFile "test/testscr.txt"
     print $ lexer testScript
-    print $ lexer "(* foo *)"
+    print $ stmtParse testScript
