@@ -6,17 +6,17 @@ import Text.Parsec.Prim
 import Text.Parsec.Token
 import Text.Parsec.Combinator
 import Text.Parsec.Char
-import Data.Text (Text, pack, unpack, replace)
+import Data.Text (Text, pack, unpack, replace, concat)
 import Text.Parsec.Text (Parser)
 import Text.Parsec.Error
 import qualified Data.Text.IO as TIO
 import qualified Text.Parsec.Pos as TP
 import qualified Data.List as List
 
-data Stmt = UpdateDialog Text
-          | UpdateSentence Text Text
-          | Command Text  
-          | Comment Text 
+data Stmt = UpdateDialog Text Text
+          | UpdateSentence Text
+          | Command Text Text  
+          | Comment Text
     deriving Show
 
 data Tk = BR           -- \n
@@ -82,12 +82,25 @@ rawText = token (show . fst) snd ptkParse
         ptkParse (RAWSTR txt, _) = Just txt
         ptkParse _ = Nothing
 
-updateDialog :: Parsec [PTk] () Stmt
-updateDialog = UpdateDialog <$> rawText
+rawTextBr :: Parsec [PTk] () Text
+rawTextBr = Data.Text.concat <$> (many1 (tkb <|> rawText))
+    where
+        tkb = (\() -> "\n") <$> (tksym BR)
 
 updateSentence :: Parsec [PTk] () Stmt
-updateSentence =
-    (UpdateSentence <$> (rawText <* (tksym COLON))) <*> rawText
+updateSentence = UpdateSentence <$> rawText
+
+updateDialog :: Parsec [PTk] () Stmt
+updateDialog =
+    (UpdateDialog <$> (rawText <* (tksym COLON)))
+        <*> rawTextBr
+
+command :: Parsec [PTk] () Stmt
+command =
+    between (tksym LSB) (tksym RSB) aux
+    where
+        aux = (Command <$> rawText <* (tksym COLON))
+                <*> rawTextBr
 
 tokenToText :: PTk -> Text
 tokenToText (BR, _) = "\n"
@@ -106,7 +119,10 @@ comment = Comment . (List.foldl (\acc a -> acc <> (tokenToText a)) "")
                         *> (manyTill anyToken (try $ tksym RStar)))
 
 lineStmt :: Parsec [PTk] () Stmt
-lineStmt = try comment <|> try updateSentence <|> updateDialog
+lineStmt = try command
+        <|> try comment
+        <|> try updateDialog
+        <|> updateSentence
 
 stmtParse :: Text -> Either Text.Parsec.Error.ParseError [Stmt]
 stmtParse txt = do
